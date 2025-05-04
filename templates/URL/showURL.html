@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Ваши ссылки</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            height: 100vh;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 2rem 3rem;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome {
+            font-size: 20px;
+            margin-bottom: 1rem;
+            color: #343a40;
+        }
+
+        h2 {
+            color: #343a40;
+            margin-bottom: 1rem;
+        }
+
+        form {
+            margin-bottom: 2rem;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #138496;
+        }
+
+        .url-item {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f1f3f5;
+            border-radius: 10px;
+        }
+
+        .short-url {
+            font-weight: bold;
+            color: #17a2b8;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .short-url:hover {
+            text-decoration: underline;
+        }
+
+        .original-url {
+            font-size: 14px;
+            color: #495057;
+            word-break: break-all;
+        }
+
+        #urlList {
+            font-size: 16px;
+        }
+
+        .message {
+            margin-top: 0.5rem;
+            font-size: 14px;
+            color: #28a745;
+        }
+
+        .error {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="welcome">Добро пожаловать, {{ .login }}!</div>
+    <h2>Создать новую ссылку:</h2>
+    <form id="createForm">
+        <input type="url" id="full_url" placeholder="Оригинальная ссылка (https://...)" required />
+        <input type="text" id="short_url" placeholder="Пожелание к короткой ссылке (необязательно)" />
+        <textarea id="description" placeholder="Описание (необязательно)" rows="2"></textarea>
+        <button type="submit">Создать</button>
+        <div id="createMessage" class="message"></div>
+    </form>
+
+    <h2>Ваши ссылки:</h2>
+    <div id="urls">
+        <div id="urlList">Загрузка...</div>
+    </div>
+</div>
+
+<script>
+    async function loadLinks() {
+        try {
+            const res = await fetch('/url/data', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            const container = document.getElementById('urlList');
+
+            if (!res.ok) {
+                container.textContent = 'Ошибка при загрузке ссылок';
+                return;
+            }
+
+            const urls = await res.json();
+            container.innerHTML = '';
+
+            if (!urls || urls.length === 0) {
+                container.innerHTML = 'У вас ещё нет ссылок.';
+                return;
+            }
+
+            urls.forEach(link => {
+                const div = document.createElement('div');
+                div.className = 'url-item';
+                div.innerHTML = `
+                    <a class="short-url" href="${link.short_url}" target="_blank">${link.short_url}</a>
+                    <div class="original-url">${link.full_url}</div>
+                `;
+                container.appendChild(div);
+            });
+        } catch (err) {
+            document.getElementById('urlList').textContent = 'Ошибка: ' + err.message;
+        }
+    }
+
+    document.getElementById('createForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const full_url = document.getElementById('full_url').value.trim();
+        const short_url = document.getElementById('short_url').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const messageEl = document.getElementById('createMessage');
+
+        messageEl.textContent = '';
+        messageEl.classList.remove('error');
+
+        // Формируем объект только с непустыми значениями
+        const data = { full_url };
+        if (short_url) data.short_url = short_url;
+        if (description) data.description = description;
+
+        try {
+            const res = await fetch('/url', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.error || 'Ошибка при создании ссылки');
+            }
+
+            messageEl.textContent = 'Ссылка успешно создана!';
+            document.getElementById('createForm').reset();
+            loadLinks();
+        } catch (err) {
+            messageEl.textContent = 'Ошибка: ' + err.message;
+            messageEl.classList.add('error');
+        }
+    });
+
+
+    window.addEventListener('DOMContentLoaded', loadLinks);
+</script>
+</body>
+</html>

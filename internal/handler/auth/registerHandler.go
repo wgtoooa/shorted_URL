@@ -1,6 +1,8 @@
-package handler
+package auth
 
 import (
+	"database/sql"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"log"
@@ -23,8 +25,12 @@ func RegisterHandlerPost(ctx *gin.Context) {
 	}
 
 	checkLogin, err := query.AccountExists(database.DB, login)
-	if err != nil || checkLogin {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "so login exits"})
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		return
+	}
+	if checkLogin {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "login already exists"})
 		return
 	}
 

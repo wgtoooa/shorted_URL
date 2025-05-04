@@ -3,9 +3,10 @@ package Table
 import "time"
 
 type URL struct {
-	Id         int
-	Full_url   string
-	Short_url  string
-	Account_id int
-	Created_at time.Time
+	Id          int       `json:"id"`
+	Full_url    string    `json:"full_url"`
+	Short_url   string    `json:"short_url"`
+	Account_id  int       `json:"account_id"`
+	Created_at  time.Time `json:"created_at"`
+	Description string    `json:"description"`
 }

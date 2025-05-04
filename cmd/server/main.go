@@ -5,6 +5,8 @@ import (
 	"log"
 	"path/filepath"
 	handler "url_shortness/internal/handler"
+	"url_shortness/internal/handler/auth"
+	"url_shortness/internal/handler/shortURL"
 	"url_shortness/internal/repository/database"
 	"url_shortness/internal/repository/database/query"
 )
@@ -36,13 +38,21 @@ func main() {
 
 	router.LoadHTMLFiles(files...) // load all files in server
 
-	router.GET("/register", handler.RegisterHandlerGet)
-	router.POST("/register", handler.RegisterHandlerPost)
+	router.GET("/", handler.HelloHandler)
 
-	router.GET("/login", handler.LoginHandlerGet)
-	router.POST("/login", handler.LoginHandlerPost)
+	router.GET("/register", auth.RegisterHandlerGet)
+	router.POST("/register", auth.RegisterHandlerPost)
 
-	router.GET("/url", handler.ShowURLhandler)
+	router.GET("/login", auth.LoginHandlerGet)
+	router.POST("/login", auth.LoginHandlerPost)
+
+	Protected := router.Group("/")
+	Protected.Use(auth.AuthMiddleware())
+
+	Protected.GET("/url", shortURL.ShowURLhandler)
+	Protected.GET("/url/data", shortURL.GetUserURLsJSON)
+	Protected.POST("/url", shortURL.CreateShortURLhandler)
+	Protected.GET("/:url", shortURL.FolowURLHandler)
 
 	log.Println("server starting....")
 	router.Run(":8080") //starting server
