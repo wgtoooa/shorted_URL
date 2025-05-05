@@ -13,7 +13,7 @@ import (
 )
 
 func RegisterHandlerGet(ctx *gin.Context) {
-	ctx.HTML(200, "register.html", nil)
+	ctx.HTML(200, "register.html", nil) // register form
 }
 
 func RegisterHandlerPost(ctx *gin.Context) {
@@ -24,7 +24,7 @@ func RegisterHandlerPost(ctx *gin.Context) {
 		return
 	}
 
-	checkLogin, err := query.AccountExists(database.DB, login)
+	checkLogin, err := query.AccountExists(database.DB, login) // check login exist
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
@@ -34,11 +34,11 @@ func RegisterHandlerPost(ctx *gin.Context) {
 		return
 	}
 
-	err = query.CreateAccount(database.DB, login, string(hashPassword))
+	err = query.CreateAccount(database.DB, login, string(hashPassword)) // just create new account and add in database
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed create account"})
 		return
 	}
 	log.Println("successfully")
-	ctx.Redirect(http.StatusFound, "/login")
+	ctx.Redirect(http.StatusFound, "/login") // moving to the login page
 }

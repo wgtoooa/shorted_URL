@@ -9,7 +9,7 @@ import (
 
 func AuthMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		authHeader := ctx.GetHeader("Authorization")
+		authHeader := ctx.GetHeader("Authorization") //in json set header "Authorization" and here we him get
 		var tokenString string
 
 		if strings.HasPrefix(authHeader, "Bearer ") {

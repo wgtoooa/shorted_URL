@@ -35,7 +35,7 @@ func GetUserURLsJSON(ctx *gin.Context) {
 }
 
 func CreateShortURLhandler(ctx *gin.Context) {
-	// 1. Получаем логин пользователя из контекста (установлен в middleware)
+
 	loginValue, exists := ctx.Get("login")
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -47,11 +47,10 @@ func CreateShortURLhandler(ctx *gin.Context) {
 		return
 	}
 
-	// 2. Структура для привязки данных из запроса
+	// struct for information from url form
 	var input struct {
-		FullURL     string `json:"full_url"`
-		ShortURL    string `json:"short_url"`   // необязательно
-		Description string `json:"description"` // необязательно
+		FullURL  string `json:"full_url"`
+		ShortURL string `json:"short_url"` // необязательно
 	}
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
@@ -59,39 +58,38 @@ func CreateShortURLhandler(ctx *gin.Context) {
 		return
 	}
 
-	// 3. Валидация URL
+	//  validate url
 	if !IsValidURL(input.FullURL) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "url not valid"})
 		return
 	}
 
-	// 4. Генерация короткого URL, если он не передан
+	//  generate short url if user didnt send
 	if input.ShortURL == "" {
 		input.ShortURL = ShortURL(8) // 8 — длина по умолчанию
 	}
 
-	// 5. Получаем account_id по логину
+	// get account_id by login
 	account, err := query.GetAccount(database.DB, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
 		return
 	}
 
-	// 6. Сохраняем ссылку в БД
-	err = query.CreateURL(database.DB, input.FullURL, input.ShortURL, account.Id, input.Description)
+	// 6. save url in bd
+	err = query.CreateURL(database.DB, input.FullURL, input.ShortURL, account.Id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create url"})
 		return
 	}
 
-	// 7. Ответ
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":   "short URL created",
 		"short_url": input.ShortURL,
 	})
 }
 
-func FolowURLHandler(ctx *gin.Context) {
+func FollowURLHandler(ctx *gin.Context) {
 	short := ctx.Param("url")
 
 	var url Table.URL

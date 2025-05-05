@@ -107,7 +107,6 @@
     <form id="createForm">
         <input type="url" id="full_url" placeholder="Оригинальная ссылка (https://...)" required />
         <input type="text" id="short_url" placeholder="Пожелание к короткой ссылке (необязательно)" />
-        <textarea id="description" placeholder="Описание (необязательно)" rows="2"></textarea>
         <button type="submit">Создать</button>
         <div id="createMessage" class="message"></div>
     </form>
@@ -119,6 +118,7 @@
 </div>
 
 <script>
+
     async function loadLinks() {
         try {
             const res = await fetch('/url/data', {
@@ -149,6 +149,7 @@
                     <div class="original-url">${link.full_url}</div>
                 `;
                 container.appendChild(div);
+
             });
         } catch (err) {
             document.getElementById('urlList').textContent = 'Ошибка: ' + err.message;
@@ -159,7 +160,6 @@
         e.preventDefault();
         const full_url = document.getElementById('full_url').value.trim();
         const short_url = document.getElementById('short_url').value.trim();
-        const description = document.getElementById('description').value.trim();
         const messageEl = document.getElementById('createMessage');
 
         messageEl.textContent = '';
@@ -168,7 +168,7 @@
         // Формируем объект только с непустыми значениями
         const data = { full_url };
         if (short_url) data.short_url = short_url;
-        if (description) data.description = description;
+
 
         try {
             const res = await fetch('/url', {

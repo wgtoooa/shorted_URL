@@ -12,6 +12,7 @@ import (
 )
 
 var DSN = "postgres://postgres:12345@localhost:5432/postgres"
+const DSN = "host=dpg-d0cgip6uk2gs73981jeg-a user=wgtoooa password=j217PeAIMy9KrwFoFIV9ftYwIBuk0OXs dbname=shorted_url port=5432 sslmode=disable" //"postgres://postgres:12345@localhost:5432/postgres"
 
 func main() {
 	router := gin.Default()
@@ -52,8 +53,8 @@ func main() {
 	Protected.GET("/url", shortURL.ShowURLhandler)
 	Protected.GET("/url/data", shortURL.GetUserURLsJSON)
 	Protected.POST("/url", shortURL.CreateShortURLhandler)
-	Protected.GET("/:url", shortURL.FolowURLHandler)
+	Protected.GET("/:url", shortURL.FollowURLHandler)
 
 	log.Println("server starting....")
-	router.Run(":8080") //starting server
+	router.Run("0.0.0.0:8080") //starting server
 }
