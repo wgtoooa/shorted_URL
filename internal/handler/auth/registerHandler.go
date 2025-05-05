@@ -26,6 +26,7 @@ func RegisterHandlerPost(ctx *gin.Context) {
 
 	checkLogin, err := query.AccountExists(database.DB, login) // check login exist
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		log.Println(err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}

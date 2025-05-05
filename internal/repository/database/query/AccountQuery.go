@@ -27,10 +27,9 @@ func CreateAccount(pool *pgxpool.Pool, login string, password string) (err error
 }
 
 func GetAccount(pool *pgxpool.Pool, login string) (user Table.Account, err error) {
-	query := `select id,login,password,status,created_at,countURL from Account where login = $1`
+	query := `select id,login,password,status,created_at,counturl from Account where login = $1`
 	err = pool.QueryRow(context.Background(), query, login).
 		Scan(&user.Id, &user.Login, &user.Password, &user.Status, &user.CreatedAt, &user.CountURL)
-
 	return
 }
 
