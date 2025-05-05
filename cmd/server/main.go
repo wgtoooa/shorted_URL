@@ -11,7 +11,7 @@ import (
 	"url_shortness/internal/repository/database/query"
 )
 
-var DSN = "postgres://postgres:12345@localhost:5432/postgres"
+//var DSN = "postgres://postgres:12345@localhost:5432/postgres"
 const DSN = "host=dpg-d0cgip6uk2gs73981jeg-a user=wgtoooa password=j217PeAIMy9KrwFoFIV9ftYwIBuk0OXs dbname=shorted_url port=5432 sslmode=disable" //"postgres://postgres:12345@localhost:5432/postgres"
 
 func main() {
