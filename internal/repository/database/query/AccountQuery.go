@@ -13,7 +13,8 @@ func CreatedTableAccount(pool *pgxpool.Pool) (err error) {
 		login varchar not null unique,
 		password varchar not null,
 		status varchar default 'online' check(status in ('online','offline')),
-		created_at timestamp default now()	    
+		created_at timestamp default now(),	    
+	    countURL integer
 	)`
 
 	_, err = pool.Exec(context.Background(), query)
@@ -27,9 +28,10 @@ func CreateAccount(pool *pgxpool.Pool, login string, password string) (err error
 }
 
 func GetAccount(pool *pgxpool.Pool, login string) (user Table.Account, err error) {
-	query := `select id,login,password,status,created_at,counturl from Account where login = $1`
+	query := `select id,login,password,status,created_at,countURL from Account where login = $1`
 	err = pool.QueryRow(context.Background(), query, login).
 		Scan(&user.Id, &user.Login, &user.Password, &user.Status, &user.CreatedAt, &user.CountURL)
+
 	return
 }
 
