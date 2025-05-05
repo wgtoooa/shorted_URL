@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"os"
 	"path/filepath"
 	handler "url_shortness/internal/handler"
 	"url_shortness/internal/handler/auth"
@@ -11,7 +12,6 @@ import (
 	"url_shortness/internal/repository/database/query"
 )
 
-//var DSN = "postgres://postgres:12345@localhost:5432/postgres"
 const DSN = "host=dpg-d0cgip6uk2gs73981jeg-a user=wgtoooa password=j217PeAIMy9KrwFoFIV9ftYwIBuk0OXs dbname=shorted_url port=5432 sslmode=disable" //"postgres://postgres:12345@localhost:5432/postgres"
 
 func main() {
@@ -56,5 +56,10 @@ func main() {
 	Protected.GET("/:url", shortURL.FollowURLHandler)
 
 	log.Println("server starting....")
-	router.Run("0.0.0.0:8080") //starting server
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	router.Run("0.0.0.0:" + port)
 }
