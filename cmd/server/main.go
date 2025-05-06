@@ -12,7 +12,8 @@ import (
 	"url_shortness/internal/repository/database/query"
 )
 
-const DSN = "host=dpg-d0cpup2dbo4c73fn8in0-a user=wgtoooa password=ZTUEOl5nciZKu6FPcDv9uZAQw7kV914U dbname=shorted_url port=5432 sslmode=disable"
+const DSN = "host=dpg-d0cpup2dbo4c73fn8in0-a user=wgtoooa password=ZTUEOl5nciZKu6FPcDv9uZAQw7kV914U dbname=shorted_url_yzi7 port=5432 sslmode=disable"
+
 
 func main() {
 	router := gin.Default()
