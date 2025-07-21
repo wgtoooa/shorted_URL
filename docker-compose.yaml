@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine  # Отличный выбор - alpine-версия легковесна
+    container_name: PostgresWithDocker
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret  # Рекомендую вынести в .env файл
+      POSTGRES_DB: mydb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Правильно - данные сохранятся
+    ports:
+      - "5432:5432"  # Лучше использовать "5432:5432" только для разработки
+    networks:
+      - my_network
+    healthcheck:  # Отличная проверка здоровья!
+      test: ["CMD-SHELL", "pg_isready -U admin -d mydb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped  # Добавил - автоматический перезапуск при падении
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Явное указание Dockerfile
+    image: my-first-app:1.1
+    container_name: AppWithDocker
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres  # Правильно - используем имя сервиса
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_NAME: mydb
+    depends_on:
+      postgres:
+        condition: service_healthy  # Корректная зависимость
+    networks:
+      - my_network
+    command: ./main  # ОК, если main собран в контейнере
+    restart: unless-stopped  # Добавил - автоматический перезапуск
+    # volumes:  # Раскомментировать для разработки:
+    #   - ./:/app  # Монтирование кода для hot-reload
+
+networks:
+  my_network:
+    name: AppWithDocker_my_network  # Явное имя - хорошо для управления
+    driver: bridge
+    attachable: true  # Позволяет подключать другие контейнеры
+
+volumes:
+  postgres_data:  # Правильно - данные сохранятся между перезапусками
+    name: postgres_app_data  # Явное имя тома для удобства

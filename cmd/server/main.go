@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"path/filepath"
@@ -9,32 +11,36 @@ import (
 	"url_shortness/internal/handler/auth"
 	"url_shortness/internal/handler/shortURL"
 	"url_shortness/internal/repository/database"
-	"url_shortness/internal/repository/database/query"
+	"url_shortness/pkg/logger"
 )
 
-const DSN = "host=dpg-d0cpup2dbo4c73fn8in0-a user=wgtoooa password=ZTUEOl5nciZKu6FPcDv9uZAQw7kV914U dbname=shorted_url_yzi7 port=5432 sslmode=disable"
+var DSlN = database.DataBaseConfig{
+	User:     os.Getenv("DB_USER"),
+	Password: os.Getenv("DB_PASSWORD"),
+	Host:     os.Getenv("DB_HOST"),
+	Port:     os.Getenv("DB_PORT"),
+	DBName:   os.Getenv("DB_NAME"),
+}
 
+var DSN = database.DataBaseConfig{
+	User:     "admin",
+	Password: "secret",
+	Host:     "localhost",
+	Port:     "5432",
+	DBName:   "mydb",
+}
 
 func main() {
+
 	router := gin.Default()
 
+	log.Println(DSN)
 	database.BDinit(DSN) //initialize database
 	defer database.DB.Close()
 
-	err := query.CreatedTableAccount(database.DB) // create table accounts if exists
-	if err != nil {
-		log.Printf("failsed create table account %e", err)
-		return
-	}
-	err = query.CreateTableURL(database.DB) // create table URL if exists
-	if err != nil {
-		log.Printf("failsed create table URL %e", err)
-		return
-	}
-
 	files, err := filepath.Glob("templates/**/*") // load all files from templates
 	if err != nil {
-		log.Println("failed in filePath")
+		logger.Log.Error("failed Load template files", zap.Error(err))
 		return
 	}
 
@@ -63,4 +69,11 @@ func main() {
 	}
 
 	router.Run("0.0.0.0:" + port)
+}
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		logger.Log.Error("Error loading .env file")
+		return
+	}
 }
