@@ -5,18 +5,19 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"os"
 	"time"
-	"url_shortness/internal/repository/database"
 	"url_shortness/internal/repository/database/query"
 )
 
-var jwtSecret = []byte("BMCHPx1K+qIeVEn18qnicuT4cC+m4PmSi9Lzr0eeALc=")
+var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 //var jwtSecret = []byte("YOUR_SECRET_KEY")
 
-func LoginHandlerPost(ctx *gin.Context) {
+func (h *Auth) LoginHandlerPost(ctx *gin.Context) {
 	var inputLoginDate struct { // it information user send from login page
 		Login    string `form:"login"`
 		Password string `form:"password"`
@@ -27,12 +28,14 @@ func LoginHandlerPost(ctx *gin.Context) {
 		return
 	}
 
-	user, err := query.GetAccount(database.DB, inputLoginDate.Login) // get account it user
+	user, err := query.GetAccount(h.db, inputLoginDate.Login) // get account it user
 	if err != nil {
+
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "such account does not exist"})
 			return
 		}
+		h.logger.Error(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}
@@ -44,15 +47,16 @@ func LoginHandlerPost(ctx *gin.Context) {
 
 	token, err := GenerateToken(inputLoginDate.Login) // generate token in order to user verification
 	if err != nil {
+		h.logger.Error(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
-
+	h.logger.Info("token", zap.String("token", token), zap.String("login", inputLoginDate.Login))
 	ctx.SetCookie("token", token, 3600, "/", "localhost", true, true) // set Cookie
 	ctx.Redirect(http.StatusFound, "/url")
 }
 
-func LoginHandlerGet(ctx *gin.Context) {
+func (h *Auth) LoginHandlerGet(ctx *gin.Context) {
 	ctx.HTML(200, "login.html", nil)
 }
 

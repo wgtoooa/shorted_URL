@@ -7,8 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"url_shortness/internal/repository/Table"
-	"url_shortness/internal/repository/database"
+	"url_shortness/internal/repository/database/Table"
 	"url_shortness/internal/repository/database/query"
 )
 
@@ -19,13 +18,13 @@ const (
 
 var SeedeRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-func ShowURLhandler(ctx *gin.Context) {
+func (u *URL) ShowURLhandler(ctx *gin.Context) {
 	login := ctx.MustGet("login").(string)
 	ctx.HTML(http.StatusOK, "showURL.html", gin.H{"login": login})
 }
-func GetUserURLsJSON(ctx *gin.Context) {
+func (u *URL) GetUserURLsJSON(ctx *gin.Context) {
 	login := ctx.MustGet("login").(string)
-	urls, err := query.GetURLS(database.DB, login)
+	urls, err := query.GetURLS(u.db, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed get user url"})
 		return
@@ -34,7 +33,7 @@ func GetUserURLsJSON(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, urls)
 }
 
-func CreateShortURLhandler(ctx *gin.Context) {
+func (u *URL) CreateShortURLhandler(ctx *gin.Context) {
 
 	loginValue, exists := ctx.Get("login")
 	if !exists {
@@ -70,14 +69,14 @@ func CreateShortURLhandler(ctx *gin.Context) {
 	}
 
 	// get account_id by login
-	account, err := query.GetAccount(database.DB, login)
+	account, err := query.GetAccount(u.db, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
 		return
 	}
 
 	// 6. save url in bd
-	err = query.CreateURL(database.DB, input.FullURL, input.ShortURL, account.Id)
+	err = query.CreateURL(u.db, input.FullURL, input.ShortURL, account.Id)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create url"})
 		return
@@ -89,13 +88,13 @@ func CreateShortURLhandler(ctx *gin.Context) {
 	})
 }
 
-func FollowURLHandler(ctx *gin.Context) {
+func (u *URL) FollowURLHandler(ctx *gin.Context) {
 	short := ctx.Param("url")
 
 	var url Table.URL
 	var err error
 
-	url.Full_url, err = query.GetURLByShortURL(database.DB, short)
+	url.Full_url, err = query.GetURLByShortURL(u.db, short)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": "not found page"})
 		return

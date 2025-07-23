@@ -4,14 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"go.uber.org/zap"
-	"log"
 	"time"
+	"url_shortness/internal/logger"
 	"url_shortness/internal/repository/database/query"
-	"url_shortness/pkg/logger"
 )
-
-var DB *pgxpool.Pool
 
 type DataBaseConfig struct {
 	User            string
@@ -27,49 +23,40 @@ type DataBaseConfig struct {
 	ConnectTimeout  time.Duration // Таймаут подключения
 }
 
-func BDinit(config DataBaseConfig) {
-
+func InitDB(config DataBaseConfig) (*pgxpool.Pool, error) {
 	dsn := fmt.Sprintf("user=%s dbname=%s password=%s host=%s port=%s",
 		config.User, config.DBName, config.Password, config.Host, config.Port)
 
 	poolConfig, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
-		logger.Log.Error(err.Error())
+		return nil, fmt.Errorf("failed to parse config: %w", err)
 	}
-	log.Println(dsn)
-	//// Устанавливаем параметры пула
-	//poolConfig.MaxConns = config.MaxConns
-	//poolConfig.MinConns = config.MinConns
-	//poolConfig.MaxConnLifetime = config.MaxConnLifetime
-	//poolConfig.MaxConnIdleTime = config.MaxConnIdleTime
-	//poolConfig.ConnConfig.ConnectTimeout = config.ConnectTimeout TODO: Разобраться
 
-	// Создаем пул соединений
-	DB, err = pgxpool.NewWithConfig(context.Background(), poolConfig)
+	dbPool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
-		logger.Log.Error("failed to connect to PostgreSQL", zap.Error(err))
-		return
+		return nil, fmt.Errorf("failed to create connection pool: %w", err)
 	}
 
 	// Проверяем соединение
-	conn, err := DB.Acquire(context.Background())
+	conn, err := dbPool.Acquire(context.Background())
 	if err != nil {
-		log.Println("failed to acquire connection from pool")
-		panic(err)
+		dbPool.Close() // Закрываем пул при ошибке
+		return nil, fmt.Errorf("failed to acquire connection: %w", err)
 	}
 	conn.Release()
 
-	log.Println("Successfully connected to PostgreSQL")
+	logger.Get().Info("Successfully connected to PostgreSQL")
 
-	err = query.CreatedTableAccount(DB) // create table accounts if exists
-	if err != nil {
-		logger.Log.Error("failed create table account", zap.Error(err))
-		return
-	}
-	err = query.CreateTableURL(DB) // create table URL if exists
-	if err != nil {
-		logger.Log.Error("failed create table URL ", zap.Error(err))
-		return
+	// Создаем таблицы
+	if err = query.CreatedTableAccount(dbPool); err != nil {
+		dbPool.Close()
+		return nil, fmt.Errorf("failed to create account table: %w", err)
 	}
 
+	if err = query.CreateTableURL(dbPool); err != nil {
+		dbPool.Close()
+		return nil, fmt.Errorf("failed to create URL table: %w", err)
+	}
+
+	return dbPool, nil
 }

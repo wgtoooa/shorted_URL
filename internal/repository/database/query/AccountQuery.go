@@ -3,7 +3,9 @@ package query
 import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"url_shortness/internal/repository/Table"
+	"go.uber.org/zap"
+	"url_shortness/internal/logger"
+	"url_shortness/internal/repository/database/Table"
 )
 
 func CreatedTableAccount(pool *pgxpool.Pool) (err error) {
@@ -12,12 +14,15 @@ func CreatedTableAccount(pool *pgxpool.Pool) (err error) {
 		id serial primary key,
 		login varchar not null unique,
 		password varchar not null,
-		status varchar default 'online' check(status in ('online','offline')),
 		created_at timestamp default now(),	    
 	    countURL integer
 	)`
 
 	_, err = pool.Exec(context.Background(), query)
+	if err != nil {
+		logger.Get().Error("failed create table account", zap.Error(err))
+	}
+	logger.Get().Info("Successfully created table account")
 	return
 }
 
@@ -28,9 +33,9 @@ func CreateAccount(pool *pgxpool.Pool, login string, password string) (err error
 }
 
 func GetAccount(pool *pgxpool.Pool, login string) (user Table.Account, err error) {
-	query := `select id,login,password,status,created_at,countURL from Account where login = $1`
+	query := `select id,login,password,created_at,countURL from Account where login = $1`
 	err = pool.QueryRow(context.Background(), query, login).
-		Scan(&user.Id, &user.Login, &user.Password, &user.Status, &user.CreatedAt, &user.CountURL)
+		Scan(&user.Id, &user.Login, &user.Password, &user.CreatedAt, &user.CountURL)
 
 	return
 }

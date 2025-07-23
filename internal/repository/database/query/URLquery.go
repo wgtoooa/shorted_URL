@@ -3,7 +3,7 @@ package query
 import (
 	"context"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"url_shortness/internal/repository/Table"
+	"url_shortness/internal/repository/database/Table"
 )
 
 func CreateTableURL(pool *pgxpool.Pool) (err error) {

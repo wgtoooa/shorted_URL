@@ -7,62 +7,58 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	handler "url_shortness/internal/handler"
-	"url_shortness/internal/handler/auth"
-	"url_shortness/internal/handler/shortURL"
+	"url_shortness/internal/Services"
+	"url_shortness/internal/logger"
 	"url_shortness/internal/repository/database"
-	"url_shortness/pkg/logger"
 )
-
-var DSlN = database.DataBaseConfig{
-	User:     os.Getenv("DB_USER"),
-	Password: os.Getenv("DB_PASSWORD"),
-	Host:     os.Getenv("DB_HOST"),
-	Port:     os.Getenv("DB_PORT"),
-	DBName:   os.Getenv("DB_NAME"),
-}
-
-var DSN = database.DataBaseConfig{
-	User:     "admin",
-	Password: "secret",
-	Host:     "localhost",
-	Port:     "5432",
-	DBName:   "mydb",
-}
 
 func main() {
 
 	router := gin.Default()
 
-	log.Println(DSN)
-	database.BDinit(DSN) //initialize database
-	defer database.DB.Close()
+	var DSN = database.DataBaseConfig{
+		User:     os.Getenv("DB_USER"),
+		Password: os.Getenv("DB_PASSWORD"),
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		DBName:   os.Getenv("DB_NAME"),
+	}
+	logger.Init(false) //--Сделать еще config
+	defer logger.Get().Sync()
+
+	dbPool, err := database.InitDB(DSN)
+	if err != nil {
+		logger.Get().Fatal("Database initialization failed", zap.Error(err))
+	}
+	defer dbPool.Close()
+
+	services := Services.NewAppServices(dbPool)
 
 	files, err := filepath.Glob("templates/**/*") // load all files from templates
 	if err != nil {
-		logger.Log.Error("failed Load template files", zap.Error(err))
+		logger.Get().Error("failed Load template files", zap.Error(err))
 		return
 	}
 
 	router.LoadHTMLFiles(files...) // load all files in server
 
-	router.GET("/", handler.HelloHandler)
+	router.GET("/", services.Handler().HelloHandler)
 
-	router.GET("/register", auth.RegisterHandlerGet)
-	router.POST("/register", auth.RegisterHandlerPost)
+	router.GET("/register", services.Auth().RegisterHandlerGet)
+	router.POST("/register", services.Auth().RegisterHandlerPost)
 
-	router.GET("/login", auth.LoginHandlerGet)
-	router.POST("/login", auth.LoginHandlerPost)
+	router.GET("/login", services.Auth().LoginHandlerGet)
+	router.POST("/login", services.Auth().LoginHandlerPost)
 
 	Protected := router.Group("/")
-	Protected.Use(auth.AuthMiddleware())
+	Protected.Use(services.Auth().AuthMiddleware())
 
-	Protected.GET("/url", shortURL.ShowURLhandler)
-	Protected.GET("/url/data", shortURL.GetUserURLsJSON)
-	Protected.POST("/url", shortURL.CreateShortURLhandler)
-	Protected.GET("/:url", shortURL.FollowURLHandler)
+	Protected.GET("/url", services.URL().ShowURLhandler)
+	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
+	Protected.POST("/url", services.URL().CreateShortURLhandler)
+	Protected.GET("/:url", services.URL().FollowURLHandler)
 
-	log.Println("server starting....")
+	logger.Get().Info("server starting....")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -73,7 +69,7 @@ func main() {
 
 func init() {
 	if err := godotenv.Load(); err != nil {
-		logger.Log.Error("Error loading .env file")
+		log.Fatal("Error loading .env file")
 		return
 	}
 }

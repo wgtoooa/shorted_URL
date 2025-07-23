@@ -5,6 +5,6 @@ import (
 	"net/http"
 )
 
-func HelloHandler(ctx *gin.Context) {
+func (h *Handler) HelloHandler(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "hello.html", nil)
 }
