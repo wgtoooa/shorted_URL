@@ -6,26 +6,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"strings"
 	"url_shortness/internal/repository/database/query"
 )
 
-func (h *Auth) RegisterHandlerGet(ctx *gin.Context) {
+func (a *Auth) RegisterHandlerGet(ctx *gin.Context) {
 	ctx.HTML(200, "register.html", nil) // register form
 }
 
-func (h *Auth) RegisterHandlerPost(ctx *gin.Context) {
-	login := strings.TrimSpace(ctx.PostForm("login"))
+func (a *Auth) RegisterHandlerPost(ctx *gin.Context) {
+	login := ValidLogin(ctx.PostForm("login"))
 	hashPassword, err := bcrypt.GenerateFromPassword([]byte(ctx.PostForm("password")), bcrypt.DefaultCost) // hash user password
 	if err != nil {
-		h.logger.Error("failed hash password")
+		a.logger.Error("failed hash password")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed hash password"})
 		return
 	}
 
-	checkLogin, err := query.AccountExists(h.db, login) // check login exist
+	checkLogin, err := query.AccountExists(a.db, login) // check login exist
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		h.logger.Error("failed check login")
+		a.logger.Error("failed check login")
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}
@@ -34,11 +33,11 @@ func (h *Auth) RegisterHandlerPost(ctx *gin.Context) {
 		return
 	}
 
-	err = query.CreateAccount(h.db, login, string(hashPassword)) // just create new account and add in database
+	err = query.CreateAccount(a.db, login, string(hashPassword)) // just create new account and add in database
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed create account"})
 		return
 	}
-	h.logger.Info("successfully,account created")
+	a.logger.Info("successfully,account created")
 	ctx.Redirect(http.StatusFound, "/login") // moving to the login page
 }

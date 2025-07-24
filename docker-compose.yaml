@@ -2,12 +2,12 @@ version: '3.8'
 
 services:
   postgres:
-    image: postgres:15-alpine
-    container_name: my_postgreshhh
+    image: postgres:15
+    container_name: my
     environment:
-      POSTGRES_USER: admin      # Логин
-      POSTGRES_PASSWORD: secret  # Пароль
-      POSTGRES_DB: mydb         # Название БД
+      POSTGRES_USER: wgtoooa     # Логин
+      POSTGRES_PASSWORD: 12345  # Пароль
+      POSTGRES_DB: URLDB         # Название БД
     ports:
       - "5432:5432"             # Порт (host:container)
     volumes:

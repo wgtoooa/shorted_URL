@@ -2,6 +2,9 @@ package query
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"url_shortness/internal/repository/database/Table"
 )
@@ -10,10 +13,11 @@ func CreateTableURL(pool *pgxpool.Pool) (err error) {
 	query := `
 	Create table if not exists URL(
 		id serial primary key,
-		full_url varchar not null unique,
+		full_url varchar not null ,
 		short_url varchar not null unique,
 		account_id int not null references Account(id),
-		created_at timestamp default now()
+		created_at timestamp default now(),
+	    FOREIGN KEY (account_id) REFERENCES Account(id) ON DELETE CASCADE
 	    )`
 	_, err = pool.Exec(context.Background(), query)
 	return
@@ -60,4 +64,22 @@ func GetURLByShortURL(pool *pgxpool.Pool, shortURL string) (fullURL string, err 
 	query := `SELECT full_url FROM url WHERE short_url = $1`
 	err = pool.QueryRow(context.Background(), query, shortURL).Scan(&fullURL)
 	return
+}
+
+func IsExistsURL(pool *pgxpool.Pool, account_id int, full_url string) (bool, error) {
+	var id int // или другой тип, соответствующий вашему полю id
+	query := `SELECT id FROM url WHERE full_url = $1 AND account_id = $2`
+
+	err := pool.QueryRow(context.Background(), query, full_url, account_id).Scan(&id)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			// Запись не найдена
+			return false, nil
+		}
+		// Произошла реальная ошибка при запросе
+		return false, fmt.Errorf("database query error: %w", err)
+	}
+
+	// Запись найдена
+	return true, nil
 }

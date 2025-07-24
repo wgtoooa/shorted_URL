@@ -7,23 +7,25 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+	"url_shortness/internal/handler/auth"
+	"url_shortness/internal/logger"
 	"url_shortness/internal/repository/database/Table"
 	"url_shortness/internal/repository/database/query"
 )
 
 const (
-	lenShortURL = 7
-	charset     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
 var SeedeRand = rand.New(rand.NewSource(time.Now().UnixNano()))
 
-func (u *URL) ShowURLhandler(ctx *gin.Context) {
+func (u *URL) ShowURLHandler(ctx *gin.Context) {
 	login := ctx.MustGet("login").(string)
 	ctx.HTML(http.StatusOK, "showURL.html", gin.H{"login": login})
 }
+
 func (u *URL) GetUserURLsJSON(ctx *gin.Context) {
-	login := ctx.MustGet("login").(string)
+	login := auth.ValidLogin(ctx.MustGet("login").(string))
 	urls, err := query.GetURLS(u.db, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed get user url"})
@@ -33,9 +35,10 @@ func (u *URL) GetUserURLsJSON(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, urls)
 }
 
-func (u *URL) CreateShortURLhandler(ctx *gin.Context) {
+func (u *URL) CreateShortURLHandler(ctx *gin.Context) {
 
 	loginValue, exists := ctx.Get("login")
+	login := auth.ValidLogin(loginValue.(string))
 	if !exists {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 		return
@@ -68,17 +71,25 @@ func (u *URL) CreateShortURLhandler(ctx *gin.Context) {
 		input.ShortURL = ShortURL(8) // 8 — длина по умолчанию
 	}
 
-	// get account_id by login
-
 	account, err := query.GetAccount(u.db, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
 		return
 	}
-
+	ok, err = query.IsExistsURL(u.db, account.Id, input.FullURL)
+	if err != nil {
+		logger.Get().Error(err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed database query"})
+		return
+	}
+	if ok {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "so URL already exists"})
+		return
+	}
 	// 6. save url in bd
 	err = query.CreateURL(u.db, input.FullURL, input.ShortURL, account.Id)
 	if err != nil {
+		logger.Get().Error(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create url"})
 		return
 	}

@@ -42,7 +42,7 @@ func main() {
 
 	router.LoadHTMLFiles(files...) // load all files in server
 
-	router.GET("/", services.Handler().HelloHandler)
+	router.GET("/", services.Handler().GreetingHandler)
 
 	router.GET("/register", services.Auth().RegisterHandlerGet)
 	router.POST("/register", services.Auth().RegisterHandlerPost)
@@ -53,9 +53,9 @@ func main() {
 	Protected := router.Group("/")
 	Protected.Use(services.Auth().AuthMiddleware())
 
-	Protected.GET("/url", services.URL().ShowURLhandler)
+	Protected.GET("/url", services.URL().ShowURLHandler)
 	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
-	Protected.POST("/url", services.URL().CreateShortURLhandler)
+	Protected.POST("/url", services.URL().CreateShortURLHandler)
 	Protected.GET("/:url", services.URL().FollowURLHandler)
 
 	logger.Get().Info("server starting....")

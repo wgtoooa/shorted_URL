@@ -17,25 +17,27 @@ var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 //var jwtSecret = []byte("YOUR_SECRET_KEY")
 
-func (h *Auth) LoginHandlerPost(ctx *gin.Context) {
+func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 	var inputLoginDate struct { // it information user send from login page
 		Login    string `form:"login"`
 		Password string `form:"password"`
 	}
 
 	if err := ctx.ShouldBind(&inputLoginDate); err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "failed get data about inputLoginDate"}) //get information
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"}) //get information
 		return
 	}
 
-	user, err := query.GetAccount(h.db, inputLoginDate.Login) // get account it user
+	login := ValidLogin(inputLoginDate.Login)
+
+	user, err := query.GetAccount(a.db, login) // get account it user
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
 			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "such account does not exist"})
 			return
 		}
-		h.logger.Error(err.Error())
+		a.logger.Error(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
 		return
 	}
@@ -47,16 +49,16 @@ func (h *Auth) LoginHandlerPost(ctx *gin.Context) {
 
 	token, err := GenerateToken(inputLoginDate.Login) // generate token in order to user verification
 	if err != nil {
-		h.logger.Error(err.Error())
+		a.logger.Error(err.Error())
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
-	h.logger.Info("token", zap.String("token", token), zap.String("login", user.Login))
+	a.logger.Info("token", zap.String("token", token), zap.String("login", user.Login))
 	ctx.SetCookie("token", token, 3600, "/", "localhost", true, true) // set Cookie
 	ctx.Redirect(http.StatusFound, "/url")
 }
 
-func (h *Auth) LoginHandlerGet(ctx *gin.Context) {
+func (a *Auth) LoginHandlerGet(ctx *gin.Context) {
 	ctx.HTML(200, "login.html", nil)
 }
 
