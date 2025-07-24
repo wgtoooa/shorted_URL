@@ -69,6 +69,7 @@ func (u *URL) CreateShortURLhandler(ctx *gin.Context) {
 	}
 
 	// get account_id by login
+
 	account, err := query.GetAccount(u.db, login)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})

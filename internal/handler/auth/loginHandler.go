@@ -51,7 +51,7 @@ func (h *Auth) LoginHandlerPost(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
 		return
 	}
-	h.logger.Info("token", zap.String("token", token), zap.String("login", inputLoginDate.Login))
+	h.logger.Info("token", zap.String("token", token), zap.String("login", user.Login))
 	ctx.SetCookie("token", token, 3600, "/", "localhost", true, true) // set Cookie
 	ctx.Redirect(http.StatusFound, "/url")
 }

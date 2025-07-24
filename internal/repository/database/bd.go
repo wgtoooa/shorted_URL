@@ -46,7 +46,6 @@ func InitDB(config DataBaseConfig) (*pgxpool.Pool, error) {
 	conn.Release()
 
 	logger.Get().Info("Successfully connected to PostgreSQL")
-
 	// Создаем таблицы
 	if err = query.CreatedTableAccount(dbPool); err != nil {
 		dbPool.Close()
@@ -57,6 +56,6 @@ func InitDB(config DataBaseConfig) (*pgxpool.Pool, error) {
 		dbPool.Close()
 		return nil, fmt.Errorf("failed to create URL table: %w", err)
 	}
-
+	logger.Get().Info("Successfully create table")
 	return dbPool, nil
 }

@@ -17,6 +17,7 @@ func CreateTableURL(pool *pgxpool.Pool) (err error) {
 	    )`
 	_, err = pool.Exec(context.Background(), query)
 	return
+
 }
 
 func GetURLS(pool *pgxpool.Pool, login string) ([]Table.URL, error) {
