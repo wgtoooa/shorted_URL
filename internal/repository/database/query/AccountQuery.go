@@ -2,6 +2,7 @@ package query
 
 import (
 	"context"
+	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
 	"url_shortness/internal/logger"
@@ -22,7 +23,6 @@ func CreatedTableAccount(pool *pgxpool.Pool) (err error) {
 	if err != nil {
 		logger.Get().Error("failed create table account", zap.Error(err))
 	}
-	logger.Get().Info("Successfully created table account")
 	return
 }
 
@@ -41,9 +41,13 @@ func GetAccount(pool *pgxpool.Pool, login string) (user Table.Account, err error
 }
 
 func AccountExists(pool *pgxpool.Pool, login string) (bool, error) {
-	user, err := GetAccount(pool, login)
-	if user == (Table.Account{}) {
-		return false, err
+	var exists bool
+	query := `SELECT EXISTS(SELECT 1 FROM account WHERE login = $1)`
+
+	err := pool.QueryRow(context.Background(), query, login).Scan(&exists)
+	if err != nil {
+		return false, fmt.Errorf("failed to check account existence: %w", err)
 	}
-	return true, err
+
+	return exists, nil
 }

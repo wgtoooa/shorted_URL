@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
@@ -32,7 +32,7 @@
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, var(--bg-color), #e9ecef);
+            background: var(--bg-color); /* Убрал градиент */
             color: var(--text-color);
             height: 100vh;
             display: flex;
@@ -107,8 +107,14 @@
             color: var(--error-color);
             margin-top: 10px;
             display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
+        .error-message.show {
+            display: block;
+            opacity: 1;
+        }
         .theme-switcher {
             position: absolute;
             top: 20px;
@@ -135,7 +141,7 @@
     <form id="loginForm">
         <input type="text" name="login" placeholder="Login" required />
         <input type="password" name="password" placeholder="Password" required />
-        <div id="errorMessage" class="error-message"></div>
+        <div id="errorMessage" class="error-message" aria-live="assertive"></div>
         <button type="submit" class="button">Sign In</button>
     </form>
 
@@ -169,35 +175,73 @@
             themeSwitcher.textContent = 'Dark Mode🌙';
         }
     });
-
-    // Form submission handling
     document.getElementById('loginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
 
-        const formData = new FormData(this);
         const errorElement = document.getElementById('errorMessage');
-        errorElement.style.display = 'none';
+        errorElement.textContent = '';
+        errorElement.classList.remove('show');
 
         try {
             const response = await fetch('/login', {
                 method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
+                body: new FormData(this),
+                headers: { 'Accept': 'application/json' },
+                credentials: 'include' // Важно для работы с cookies
             });
 
-            if (response.ok) {
-                window.location.href = '/dashboard';
+            // Проверяем Content-Type ответа
+            const contentType = response.headers.get('content-type');
+            let result;
+
+            if (contentType && contentType.includes('application/json')) {
+                result = await response.json();
             } else {
-                const data = await response.json();
-                errorElement.textContent = data.error || 'Invalid login or password';
-                errorElement.style.display = 'block';
+                // Если ответ не JSON, обрабатываем как текст/HTML
+                const text = await response.text();
+
+                if (response.ok) {
+                    // Если статус 200, но не JSON - вероятно, это редирект через HTML
+                    window.location.href = '/url';
+                    return;
+                }
+
+                // Пытаемся найти ошибку в HTML (если это страница с ошибкой)
+                const errorMatch = text.match(/<div class="error">(.*?)<\/div>/i);
+                errorElement.textContent = errorMatch ? errorMatch[1] : 'Неизвестная ошибка сервера';
+                errorElement.classList.add('show');
+                return;
             }
+
+            if (!response.ok) {
+                // Обработка JSON-ошибок от сервера
+                errorElement.textContent = result.error || result.message || 'Ошибка авторизации';
+                errorElement.classList.add('show');
+                return;
+            }
+
+            // Успешная авторизация
+            window.location.href = result.redirect || '/url"';
+
         } catch (error) {
-            errorElement.textContent = 'Network error occurred';
-            errorElement.style.display = 'block';
+            console.error('Login error:', error);
+
+            let errorMessage;
+            if (error instanceof TypeError) {
+                errorMessage = 'Нет соединения с сервером';
+            } else if (error instanceof SyntaxError) {
+                errorMessage = 'Сервер вернул некорректные данные';
+            } else {
+                errorMessage = 'Произошла неизвестная ошибка';
+            }
+
+            errorElement.textContent = errorMessage;
+            errorElement.classList.add('show');
+
+            // Автоскрытие через 5 сек
+            setTimeout(() => errorElement.classList.remove('show'), 5000);
         }
+
     });
 </script>
 </body>

@@ -24,7 +24,7 @@ func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 	}
 
 	if err := ctx.ShouldBind(&inputLoginDate); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request data"}) //get information
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Ошибка получения данных"}) //get information
 		return
 	}
 
@@ -34,28 +34,33 @@ func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 	if err != nil {
 
 		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "such account does not exist"})
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не найден"})
 			return
 		}
 		a.logger.Error(err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "server error"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
 		return
 	}
 
 	if !CheckPassword(user.Password, inputLoginDate.Password) {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "incorrect password"})
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Неправильный пароль"})
 		return
 	}
 
 	token, err := GenerateToken(inputLoginDate.Login) // generate token in order to user verification
 	if err != nil {
-		a.logger.Error(err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "could not generate token"})
+		a.logger.Error("Ошибка генерации токена", zap.Error(err))
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "ошибка сервера"})
 		return
 	}
 	a.logger.Info("token", zap.String("token", token), zap.String("login", user.Login))
-	ctx.SetCookie("token", token, 3600, "/", "localhost", true, true) // set Cookie
-	ctx.Redirect(http.StatusFound, "/url")
+	ctx.SetCookie("token", token, 3600, "/", "localhost", false, false) // set Cookie
+
+	// И ОБЯЗАТЕЛЬНО вернуть токен в теле ответа
+	ctx.JSON(200, gin.H{
+		"token":    token,
+		"redirect": "/url", // Куда перейти после входа
+	})
 }
 
 func (a *Auth) LoginHandlerGet(ctx *gin.Context) {

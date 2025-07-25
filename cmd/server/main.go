@@ -42,6 +42,8 @@ func main() {
 
 	router.LoadHTMLFiles(files...) // load all files in server
 
+	logger.Get().Info("templates loaded")
+
 	router.GET("/", services.Handler().GreetingHandler)
 
 	router.GET("/register", services.Auth().RegisterHandlerGet)
@@ -58,13 +60,13 @@ func main() {
 	Protected.POST("/url", services.URL().CreateShortURLHandler)
 	Protected.GET("/:url", services.URL().FollowURLHandler)
 
-	logger.Get().Info("server starting....")
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
 	router.Run("0.0.0.0:" + port)
+	logger.Get().Info("server starting....", zap.String("port", port))
 }
 
 func init() {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"url_shortness/internal/repository/database/Table"
 )
@@ -30,6 +31,8 @@ func GetURLS(pool *pgxpool.Pool, login string) ([]Table.URL, error) {
 	FROM url u
 	JOIN account a ON u.account_id = a.id
 	WHERE a.login = $1
+	order by id DESC 
+	limit 5
 	`
 	rows, err := pool.Query(context.Background(), query, login)
 	if err != nil {
@@ -57,6 +60,7 @@ func GetURLS(pool *pgxpool.Pool, login string) ([]Table.URL, error) {
 func CreateURL(pool *pgxpool.Pool, full_url, short_url string, account_id int) (err error) {
 	query := `insert into URL(full_url,short_url,account_id) values ($1,$2,$3)`
 	_, err = pool.Exec(context.Background(), query, full_url, short_url, account_id)
+
 	return
 }
 
@@ -82,4 +86,25 @@ func IsExistsURL(pool *pgxpool.Pool, account_id int, full_url string) (bool, err
 
 	// Запись найдена
 	return true, nil
+}
+
+func IsDuplicateKeyError(err error) (bool, string) {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" {
+			field := "unknown"
+			switch pgErr.ConstraintName {
+			case "url_short_url_key":
+				field = "short_url"
+			}
+
+			return true, fmt.Sprintf(
+				"duplicate key value violates unique constraint '%s' (field: %s). Details: %s",
+				pgErr.ConstraintName,
+				field,
+				pgErr.Detail,
+			)
+		}
+	}
+	return false, ""
 }

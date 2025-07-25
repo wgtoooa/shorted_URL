@@ -34,7 +34,7 @@
         body {
             margin: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, var(--bg-color), #e9ecef);
+            background: var(--bg-color); /* Убрали градиент */
             color: var(--text-color);
             height: 100vh;
             display: flex;
@@ -112,10 +112,17 @@
             display: none;
         }
 
-        .error {
-            background-color: color-mix(in srgb, var(--error-color) 20%, transparent);
+        .error-message {
             color: var(--error-color);
+            margin-top: 10px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .error-message.show {
             display: block;
+            opacity: 1;
         }
 
         .success {
@@ -168,6 +175,7 @@
             <span class="password-toggle" id="togglePassword">👁️</span>
         </div>
         <div id="message" class="message"></div>
+        <div id="errorMessage" class="error-message" aria-live="assertive"></div>
         <button type="submit" class="button">Register</button>
     </form>
 
@@ -217,39 +225,36 @@
         e.preventDefault();
 
         const form = e.target;
-        const messageEl = document.getElementById('message');
-        messageEl.className = 'message';
-        messageEl.textContent = '';
-
-        const formData = new FormData(form);
-        const data = {
-            login: formData.get('login'),
-            password: formData.get('password')
-        };
+        const errorEl = document.getElementById('errorMessage');
+        errorEl.textContent = '';
+        errorEl.classList.remove('show');
 
         try {
+            const formData = new FormData(form);
             const response = await fetch('/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(data)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    login: formData.get('login'),
+                    password: formData.get('password')
+                })
             });
 
             const result = await response.json();
 
-            if (response.ok) {
-                messageEl.textContent = 'Registration successful! Redirecting...';
-                messageEl.classList.add('success');
-                setTimeout(() => {
-                    window.location.href = '/login';
-                }, 1500);
-            } else {
+            if (!response.ok) {
                 throw new Error(result.error || 'Registration failed');
             }
+
+            // Успешная регистрация
+            window.location.href = result.redirect || '/login'; // Перенаправление клиентом
+
         } catch (error) {
-            messageEl.textContent = error.message;
-            messageEl.classList.add('error');
+            errorEl.textContent = error.message;
+            errorEl.classList.add('show');
+
+            // Автоскрытие ошибки через 5 сек
+           
         }
     });
 
