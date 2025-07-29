@@ -1,0 +1,274 @@
+
+:root {
+    --bg-color: #f8f9fa;
+    --container-bg: white;
+    --text-color: #343a40;
+    --input-bg: white;
+    --input-border: #ccc;
+    --button-bg: #17a2b8;
+    --button-hover: #138496;
+    --url-item-bg: #f1f3f5;
+    --short-url-color: #17a2b8;
+    --original-url-color: #495057;
+    --message-success: #28a745;
+    --message-error: #dc3545;
+    --dropdown-bg: white;
+    --dropdown-border: #ddd;
+    --dropdown-item-hover: #f8f9fa;
+    --modal-bg: rgba(0,0,0,0.5);
+    --modal-content-bg: white;
+}
+
+.dark-mode {
+    --bg-color: #121212;
+    --container-bg: #1e1e1e;
+    --text-color: #e0e0e0;
+    --input-bg: #2d2d2d;
+    --input-border: #444;
+    --button-bg: #1a7f8c;
+    --button-hover: #136674;
+    --url-item-bg: #2d2d2d;
+    --short-url-color: #4fc3f7;
+    --original-url-color: #b0b0b0;
+    --message-success: #81c784;
+    --message-error: #e57373;
+    --dropdown-bg: #2d2d2d;
+    --dropdown-border: #444;
+    --dropdown-item-hover: #3d3d3d;
+    --modal-bg: rgba(0,0,0,0.7);
+    --modal-content-bg: #2d2d2d;
+}
+
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(to right, var(--bg-color), var(--container-bg));
+    color: var(--text-color);
+    height: 100vh;
+    padding: 40px;
+    transition: all 0.3s ease;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    background: var(--container-bg);
+    padding: 2rem 3rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.theme-switcher {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    cursor: pointer;
+    padding: 8px 12px;
+    background: var(--button-bg);
+    color: white;
+    border-radius: 20px;
+    font-size: 14px;
+    border: none;
+}
+
+.theme-switcher:hover {
+    background: var(--button-hover);
+}
+
+.welcome {
+    font-size: 20px;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+h2 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+form {
+    margin-bottom: 2rem;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 1px solid var(--input-border);
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+    background: var(--input-bg);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+button {
+    background-color: var(--button-bg);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}
+
+.url-item {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: var(--url-item-bg);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.short-url {
+    font-weight: bold;
+    color: var(--short-url-color);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.short-url:hover {
+    text-decoration: underline;
+}
+
+.original-url {
+    font-size: 14px;
+    color: var(--original-url-color);
+    word-break: break-all;
+}
+
+#urlList {
+    font-size: 16px;
+}
+
+.message {
+    margin-top: 0.5rem;
+    font-size: 14px;
+    color: var(--message-success);
+}
+
+.error {
+    color: var(--message-error);
+}
+
+/* Стили для меню с тремя точками */
+.dropdown {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+}
+
+.dropdown-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+
+.dropdown-menu {
+    position: absolute;
+    right: 0;
+    background-color: var(--dropdown-bg);
+    border: 1px solid var(--dropdown-border);
+    border-radius: 8px;
+    padding: 0.5rem 0;
+    min-width: 150px;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--text-color);
+    text-decoration: none;
+    display: block;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background-color: var(--dropdown-item-hover);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--dropdown-border);
+    margin: 0.5rem 0;
+}
+
+/* Стиль для временного сообщения о копировании */
+.copy-message {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--message-success);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1001;
+    display: none;
+}
+
+/* Стили для модального окна */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--modal-bg);
+    transition: all 0.3s ease;
+}
+
+.modal-content {
+    background-color: var(--modal-content-bg);
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 10px;
+}
+
+.modal-button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-button.cancel {
+    background-color: #6c757d;
+}
+
+.modal-button.confirm {
+    background-color: var(--message-error);
+}
+
+.modal-button:hover {
+    opacity: 0.9;
+}

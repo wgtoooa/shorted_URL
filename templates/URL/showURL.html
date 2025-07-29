@@ -1,159 +1,8 @@
-<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <title>Ваши ссылки</title>
-    <style>
-        :root {
-            --bg-color: #f8f9fa;
-            --container-bg: white;
-            --text-color: #343a40;
-            --input-bg: white;
-            --input-border: #ccc;
-            --button-bg: #17a2b8;
-            --button-hover: #138496;
-            --url-item-bg: #f1f3f5;
-            --short-url-color: #17a2b8;
-            --original-url-color: #495057;
-            --message-success: #28a745;
-            --message-error: #dc3545;
-        }
-
-        .dark-mode {
-            --bg-color: #121212;
-            --container-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --input-bg: #2d2d2d;
-            --input-border: #444;
-            --button-bg: #1a7f8c;
-            --button-hover: #136674;
-            --url-item-bg: #2d2d2d;
-            --short-url-color: #4fc3f7;
-            --original-url-color: #b0b0b0;
-            --message-success: #81c784;
-            --message-error: #e57373;
-        }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(to right, var(--bg-color), var(--container-bg));
-            color: var(--text-color);
-            height: 100vh;
-            padding: 40px;
-            transition: all 0.3s ease;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: var(--container-bg);
-            padding: 2rem 3rem;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .theme-switcher {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            cursor: pointer;
-            padding: 8px 12px;
-            background: var(--button-bg);
-            color: white;
-            border-radius: 20px;
-            font-size: 14px;
-            border: none;
-        }
-
-        .theme-switcher:hover {
-            background: var(--button-hover);
-        }
-
-        .welcome {
-            font-size: 20px;
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        h2 {
-            color: var(--text-color);
-            margin-bottom: 1rem;
-        }
-
-        form {
-            margin-bottom: 2rem;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            margin: 0.5rem 0;
-            border: 1px solid var(--input-border);
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-            background: var(--input-bg);
-            color: var(--text-color);
-            transition: all 0.3s ease;
-        }
-
-        button {
-            background-color: var(--button-bg);
-            color: white;
-            border: none;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background-color: var(--button-hover);
-        }
-
-        .url-item {
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: var(--url-item-bg);
-            border-radius: 10px;
-            transition: all 0.3s ease;
-        }
-
-        .short-url {
-            font-weight: bold;
-            color: var(--short-url-color);
-            text-decoration: none;
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-
-        .short-url:hover {
-            text-decoration: underline;
-        }
-
-        .original-url {
-            font-size: 14px;
-            color: var(--original-url-color);
-            word-break: break-all;
-        }
-
-        #urlList {
-            font-size: 16px;
-        }
-
-        .message {
-            margin-top: 0.5rem;
-            font-size: 14px;
-            color: var(--message-success);
-        }
-
-        .error {
-            color: var(--message-error);
-        }
-    </style>
+    <link rel="stylesheet" href="../../static/index/style.css" />
 </head>
 <body>
 <div class="container">
@@ -174,104 +23,22 @@
     </div>
 </div>
 
-<script>
-    // Переключение темы
-    const themeSwitcher = document.getElementById('themeSwitcher');
-    const body = document.body;
+<!-- Сообщение о копировании -->
+<div class="copy-message" id="copyMessage">Ссылка скопирована!</div>
 
-    // Проверяем сохранённую тему в localStorage
-    const currentTheme = localStorage.getItem('theme') || 'light';
+<!-- Модальное окно подтверждения удаления -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Подтвердите удаление</h3>
+        <p id="modalMessage">Вы уверены, что хотите удалить эту ссылку?</p>
+        <div class="modal-buttons">
+            <button class="modal-button cancel" id="cancelDelete">Отмена</button>
+            <button class="modal-button confirm" id="confirmDelete">Удалить</button>
+        </div>
+        <div id="deleteMessage" class="message"></div>
+    </div>
+</div>
 
-    if (currentTheme === 'dark') {
-        body.classList.add('dark-mode');
-        themeSwitcher.textContent = 'Светлая тема☀️';
-    }
-
-    themeSwitcher.addEventListener('click', () => {
-        body.classList.toggle('dark-mode');
-
-        if (body.classList.contains('dark-mode')) {
-            localStorage.setItem('theme', 'dark');
-            themeSwitcher.textContent = 'Светлая тема☀️';
-        } else {
-            localStorage.setItem('theme', 'light');
-            themeSwitcher.textContent = 'Темная тема🌙';
-        }
-    });
-
-    // Остальной JavaScript код остаётся без изменений
-    async function loadLinks() {
-        try {
-            const res = await fetch('/url/data', {
-                method: 'GET',
-                credentials: 'include'
-            });
-
-            const container = document.getElementById('urlList');
-
-            if (!res.ok) {
-                container.textContent = 'Ошибка при загрузке ссылок';
-                return;
-            }
-
-            const urls = await res.json();
-            container.innerHTML = '';
-
-            if (!urls || urls.length === 0) {
-                container.innerHTML = 'У вас ещё нет ссылок.';
-                return;
-            }
-
-            urls.forEach(link => {
-                const div = document.createElement('div');
-                div.className = 'url-item';
-                div.innerHTML = `
-                    <a class="short-url" href="${link.short_url}" target="_blank">${link.short_url}</a>
-                    <div class="original-url">${link.full_url}</div>
-                `;
-                container.appendChild(div);
-            });
-        } catch (err) {
-            document.getElementById('urlList').textContent = 'Ошибка: ' + err.message;
-        }
-    }
-
-    document.getElementById('createForm').addEventListener('submit', async function (e) {
-        e.preventDefault();
-        const full_url = document.getElementById('full_url').value.trim();
-        const short_url = document.getElementById('short_url').value.trim();
-        const messageEl = document.getElementById('createMessage');
-
-        messageEl.textContent = '';
-        messageEl.classList.remove('error');
-
-        const data = { full_url };
-        if (short_url) data.short_url = short_url;
-
-        try {
-            const res = await fetch('/url', {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            const result = await res.json();
-
-            if (!res.ok) {
-                throw new Error(result.error || 'Ошибка при создании ссылки');
-            }
-
-            messageEl.textContent = 'Ссылка успешно создана!';
-            document.getElementById('createForm').reset();
-            loadLinks();
-        } catch (err) {
-            messageEl.textContent = 'Ошибка: ' + err.message;
-            messageEl.classList.add('error');
-        }
-    });
-
-    window.addEventListener('DOMContentLoaded', loadLinks);
-</script>
+<script src="../../static/index/script.js"></script>
 </body>
 </html>

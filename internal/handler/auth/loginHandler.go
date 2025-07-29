@@ -54,7 +54,7 @@ func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 		return
 	}
 	a.logger.Info("token", zap.String("token", token), zap.String("login", user.Login))
-	ctx.SetCookie("token", token, 3600, "/", "localhost", false, false) // set Cookie
+	ctx.SetCookie("token", token, 3600, "/", "", false, false) // set Cookie
 
 	// И ОБЯЗАТЕЛЬНО вернуть токен в теле ответа
 	ctx.JSON(200, gin.H{

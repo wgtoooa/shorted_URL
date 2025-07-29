@@ -125,6 +125,19 @@ func (u *URL) FollowURLHandler(ctx *gin.Context) {
 	ctx.Redirect(http.StatusFound, url.Full_url)
 }
 
+func (u *URL) DeleteURL(ctx *gin.Context) {
+	short := ctx.Param("short_url")
+
+	err := query.DeleteURLByShortURLL(u.db, short)
+	if err != nil {
+		u.logger.Info(err.Error())
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Не удалось удалить ссылку. Попробуйте позже"})
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Ссылка удалена успешна"})
+	return
+}
+
 func IsValidURL(URL string) bool {
 	check, err := url.Parse(URL)
 	if err != nil || check.Host == "" || check.Scheme == "" {

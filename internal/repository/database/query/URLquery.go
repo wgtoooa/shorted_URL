@@ -70,8 +70,14 @@ func GetURLByShortURL(pool *pgxpool.Pool, shortURL string) (fullURL string, err 
 	return
 }
 
+func DeleteURLByShortURLL(pool *pgxpool.Pool, shortURL string) (err error) {
+	query := `DELETE FROM url WHERE short_url = $1`
+	_, err = pool.Exec(context.Background(), query, shortURL)
+	return
+}
+
 func IsExistsURL(pool *pgxpool.Pool, account_id int, full_url string) (bool, error) {
-	var id int // или другой тип, соответствующий вашему полю id
+	var id int
 	query := `SELECT id FROM url WHERE full_url = $1 AND account_id = $2`
 
 	err := pool.QueryRow(context.Background(), query, full_url, account_id).Scan(&id)
@@ -80,7 +86,7 @@ func IsExistsURL(pool *pgxpool.Pool, account_id int, full_url string) (bool, err
 			// Запись не найдена
 			return false, nil
 		}
-		// Произошла реальная ошибка при запросе
+
 		return false, fmt.Errorf("database query error: %w", err)
 	}
 

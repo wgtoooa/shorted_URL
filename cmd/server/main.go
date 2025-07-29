@@ -41,8 +41,8 @@ func main() {
 	}
 
 	router.LoadHTMLFiles(files...) // load all files in server
-
-	logger.Get().Info("templates loaded")
+	router.Static("/static", "./static")
+	logger.Get().Info("templates and static loaded ")
 
 	router.GET("/", services.Handler().GreetingHandler)
 
@@ -59,6 +59,7 @@ func main() {
 	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
 	Protected.POST("/url", services.URL().CreateShortURLHandler)
 	Protected.GET("/:url", services.URL().FollowURLHandler)
+	Protected.DELETE("/url/:short_url", services.URL().DeleteURL)
 
 	port := os.Getenv("PORT")
 	if port == "" {

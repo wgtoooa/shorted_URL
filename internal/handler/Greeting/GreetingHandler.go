@@ -20,5 +20,5 @@ func NewGreeting(pool *pgxpool.Pool, logger *zap.Logger) *Greeting {
 }
 
 func (h *Greeting) GreetingHandler(ctx *gin.Context) {
-	ctx.HTML(http.StatusOK, "hello.html", nil)
+	ctx.HTML(http.StatusOK, "greeting.html", nil)
 }
