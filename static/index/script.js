@@ -1,7 +1,19 @@
+// Функция для экранирования HTML
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Переключение темы
 const themeSwitcher = document.getElementById('themeSwitcher');
 const body = document.body;
 
-// Проверяем сохранённую тему в localStorage
+// Проверяем сохранённую тему
 const currentTheme = localStorage.getItem('theme') || 'light';
 
 if (currentTheme === 'dark') {
@@ -20,15 +32,6 @@ themeSwitcher.addEventListener('click', () => {
         themeSwitcher.textContent = 'Темная тема🌙';
     }
 });
-
-// Функция для показа сообщения о копировании
-function showCopyMessage() {
-    const message = document.getElementById('copyMessage');
-    message.style.display = 'block';
-    setTimeout(() => {
-        message.style.display = 'none';
-    }, 2000);
-}
 
 // Модальное окно для удаления
 const deleteModal = document.getElementById('deleteModal');
@@ -53,9 +56,15 @@ function hideModal() {
     currentShortUrlToDelete = null;
 }
 
+// Добавляем обработчик для кнопки подтверждения удаления
+confirmDeleteBtn.addEventListener('click', () => {
+    if (currentShortUrlToDelete) {
+        deleteLink(currentShortUrlToDelete);
+    }
+});
+
 cancelDeleteBtn.addEventListener('click', hideModal);
 
-// Закрытие модального окна при клике вне его
 window.addEventListener('click', (event) => {
     if (event.target === deleteModal) {
         hideModal();
@@ -64,163 +73,238 @@ window.addEventListener('click', (event) => {
 
 async function deleteLink(shortUrl) {
     try {
-        const res = await fetch(`/url/${encodeURIComponent(shortUrl)}`, {
+        confirmDeleteBtn.disabled = true;
+        confirmDeleteBtn.textContent = 'Удаление...';
+
+        const res = await fetch(`/protected/url/${encodeURIComponent(shortUrl)}`, {
             method: 'DELETE',
-            credentials: 'include'
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            }
         });
 
         if (!res.ok) {
-            throw new Error('Ошибка при удалении ссылки');
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(errorData.message || 'Ошибка при удалении ссылки');
         }
 
         deleteMessage.textContent = 'Ссылка успешно удалена';
-        deleteMessage.className = 'message';
+        deleteMessage.className = 'message success';
 
-        // Обновляем список через 1 секунду, чтобы пользователь увидел сообщение
         setTimeout(() => {
             loadLinks();
             hideModal();
         }, 1000);
     } catch (err) {
-        deleteMessage.textContent = 'Ошибка: ' + err.message;
+        console.error('Delete error:', err);
+        deleteMessage.textContent = 'Ошибка: ' + (err.message || 'Неизвестная ошибка');
         deleteMessage.className = 'message error';
+    } finally {
+        confirmDeleteBtn.disabled = false;
+        confirmDeleteBtn.textContent = 'Удалить';
     }
-}
-
-confirmDeleteBtn.addEventListener('click', () => {
-    if (currentShortUrlToDelete) {
-        deleteLink(currentShortUrlToDelete);
-    }
-});
-
-
-// ... (всё как раньше, до loadLinks)
-
-function escapeHTML(str) {
-    return str.replace(/[&<>"']/g, function (m) {
-        return {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        }[m];
-    });
 }
 
 function showDeleteModal(shortUrl) {
     currentShortUrlToDelete = shortUrl;
-    showModal("Подтвердите удаление", "Вы уверены, что хотите удалить эту ссылку?");
+    showModal("Подтвердите удаление", `Вы уверены, что хотите удалить ссылку "${shortUrl}"?`);
 }
 
+// Загрузка и отображение списка ссылок
 async function loadLinks() {
+    const container = document.getElementById('urlList');
+    if (!container) return;
+
+    container.innerHTML = '<div class="loading">Загрузка ссылок...</div>';
+
     try {
-        const res = await fetch('/url/data', {
+        const res = await fetch('/protected/url/data', {
             method: 'GET',
             credentials: 'include'
         });
 
-        const container = document.getElementById('urlList');
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
 
         if (!res.ok) {
-            container.textContent = 'Ошибка при загрузке ссылок';
-            return;
+            throw new Error(`Ошибка HTTP: ${res.status}`);
         }
 
-        const urls = await res.json();
+        const data = await res.json();
+        console.log('Data received:', data);
+
         container.innerHTML = '';
 
-        if (!urls || urls.length === 0) {
-            container.innerHTML = 'У вас ещё нет ссылок.';
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            container.innerHTML = '<div class="empty">У вас ещё нет ссылок.</div>';
             return;
         }
 
-        urls.forEach(link => {
+        data.forEach(link => {
+            if (!link.short_url || !link.full_url) {
+                console.warn('Invalid link format:', link);
+                return;
+            }
+
             const div = document.createElement('div');
             div.className = 'url-item';
             div.innerHTML = `
-                    <a class="short-url" href="${escapeHTML(link.short_url)}" target="_blank">${escapeHTML(link.short_url)}</a>
-                    <div class="original-url">${escapeHTML(link.full_url)}</div>
-                    <div class="dropdown">
-                        <button class="dropdown-toggle">⋯</button>
-                        <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item edit-item" data-short-url="${escapeHTML(link.short_url)}">Изменить</a>
-                            <a href="#" class="dropdown-item copy-item" data-full-url="${escapeHTML(link.full_url)}">Копировать полную ссылку</a>
-                            <div class="dropdown-divider"></div>
-                            <a href="#" class="dropdown-item delete-item" data-short-url="${escapeHTML(link.short_url)}">Удалить</a>
-                        </div>
+                <a class="short-url" href="l/${escapeHTML(link.short_url)}" target="_blank">
+                    ${escapeHTML(link.short_url)}
+                </a>
+                <div class="original-url">${escapeHTML(link.full_url)}</div>
+                <div class="dropdown">
+                    <button class="dropdown-toggle">⋯</button>
+                    <div class="dropdown-menu">
+                        <a href="#" class="dropdown-item edit-item" data-short-url="${escapeHTML(link.short_url)}">
+                            Изменить
+                        </a>
+                        <a href="#" class="dropdown-item copy-item" data-full-url="${escapeHTML(link.full_url)}">
+                            Копировать
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item delete-item" data-short-url="${escapeHTML(link.short_url)}">
+                            Удалить
+                        </a>
                     </div>
-                `;
+                </div>
+            `;
             container.appendChild(div);
         });
 
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(fullUrl)
-                .then(() => {
-                    showCopyMessage();
-                })
-                .catch(err => {
-                    console.error('Ошибка при копировании: ', err.message);
-                    alert('Не удалось скопировать ссылку: ' + err.message);
-                });
-        } else {
-            alert("Копирование не поддерживается в этом браузере.");
-        }
-
-
-        document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function (e) {
-                e.preventDefault();
-                const menu = this.nextElementSibling;
-                document.querySelectorAll('.dropdown-menu').forEach(m => {
-                    if (m !== menu) m.classList.remove('show');
-                });
-                menu.classList.toggle('show');
-            });
-        });
-
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                    menu.classList.remove('show');
-                });
-            }
-        });
-
-        document.querySelectorAll('.delete-item').forEach(item => {
-            item.addEventListener('click', function (e) {
-                e.preventDefault();
-                const shortUrl = this.dataset.shortUrl;
-                showDeleteModal(shortUrl);
-            });
-        });
-
-
-
-        document.querySelectorAll('.edit-item').forEach(item => {
-            item.addEventListener('click', function (e) {
-                e.preventDefault();
-                const shortUrl = this.dataset.shortUrl;
-                alert(`Функция изменения ссылки "${shortUrl}" будет реализована позже.`);
-            });
-        });
+        // Инициализация событий
+        initDropdowns();
+        initCopyButtons();
+        initDeleteButtons();
+        initEditButtons();
+        initShortUrlClicks();
 
     } catch (err) {
-        document.getElementById('urlList').textContent = 'Ошибка: ' + err.message;
+        console.error('Error loading links:', err);
+        container.innerHTML = `
+            <div class="error">
+                Ошибка загрузки: ${err.message}
+                <button onclick="loadLinks()">Повторить</button>
+            </div>
+        `;
     }
 }
 
-document.getElementById('createForm').addEventListener('submit', async function (e) {
+// Инициализация кликов по коротким ссылкам
+function initShortUrlClicks() {
+    document.querySelectorAll('.short-url').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const url = this.getAttribute('href');
+            window.location.href = url;
+        });
+    });
+}
+
+// Инициализация dropdown-меню
+function initDropdowns() {
+    document.querySelectorAll('.dropdown-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const menu = this.nextElementSibling;
+            document.querySelectorAll('.dropdown-menu').forEach(m => {
+                if (m !== menu) m.classList.remove('show');
+            });
+            menu.classList.toggle('show');
+        });
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
+            document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                menu.classList.remove('show');
+            });
+        }
+    });
+}
+
+// Инициализация кнопок копирования
+function initCopyButtons() {
+    document.querySelectorAll('.copy-item').forEach(item => {
+        item.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const fullUrl = this.dataset.fullUrl;
+            try {
+                await navigator.clipboard.writeText(fullUrl);
+                showToast('Ссылка скопирована!');
+            } catch (err) {
+                console.error('Ошибка копирования:', err);
+                showToast('Не удалось скопировать ссылку', 'error');
+            }
+        });
+    });
+}
+
+// Инициализация кнопок удаления
+function initDeleteButtons() {
+    document.querySelectorAll('.delete-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const shortUrl = this.dataset.shortUrl;
+            showDeleteModal(shortUrl);
+        });
+    });
+}
+
+// Инициализация кнопок редактирования
+function initEditButtons() {
+    document.querySelectorAll('.edit-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const shortUrl = this.dataset.shortUrl;
+            showToast(`Функция изменения ссылки "${shortUrl}" будет реализована позже`, 'info');
+        });
+    });
+}
+
+// Функция для показа уведомлений
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
+}
+
+// Обработка формы создания ссылки
+document.getElementById('createForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
-    const full_url = document.getElementById('full_url').value.trim();
-    const short_url = document.getElementById('short_url').value.trim();
+    const form = e.target;
+    const full_url = form.elements.full_url.value.trim();
+    const short_url = form.elements.short_url?.value.trim();
     const messageEl = document.getElementById('createMessage');
 
     messageEl.textContent = '';
-    messageEl.classList.remove('error');
+    messageEl.classList.remove('error', 'success');
 
-    if (!/^https?:\/\//.test(full_url)) {
-        messageEl.textContent = 'Ссылка должна начинаться с http:// или https://';
+    // Валидация URL
+    if (!/^https?:\/\//i.test(full_url)) {
+        messageEl.textContent = 'URL должен начинаться с http:// или https://';
+        messageEl.classList.add('error');
+        return;
+    }
+
+    // Валидация короткой ссылки (если указана)
+    if (short_url && !/^[a-zA-Z0-9_-]+$/.test(short_url)) {
+        messageEl.textContent = 'Короткая ссылка может содержать только буквы, цифры, "_" и "-"';
         messageEl.classList.add('error');
         return;
     }
@@ -229,7 +313,10 @@ document.getElementById('createForm').addEventListener('submit', async function 
     if (short_url) data.short_url = short_url;
 
     try {
-        const res = await fetch('/url', {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+
+        const res = await fetch('/protected/url', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
@@ -243,12 +330,27 @@ document.getElementById('createForm').addEventListener('submit', async function 
         }
 
         messageEl.textContent = 'Ссылка успешно создана!';
-        document.getElementById('createForm').reset();
+        messageEl.classList.add('success');
+        form.reset();
         loadLinks();
     } catch (err) {
         messageEl.textContent = 'Ошибка: ' + err.message;
         messageEl.classList.add('error');
+    } finally {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = false;
     }
 });
 
-window.addEventListener('DOMContentLoaded', loadLinks);
+// Загрузка при старте
+window.addEventListener('DOMContentLoaded', () => {
+    loadLinks();
+
+    // Инициализация всех элементов
+    if (themeSwitcher) {
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+        }
+    }
+});

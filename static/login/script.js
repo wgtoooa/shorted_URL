@@ -48,7 +48,7 @@
 
     if (response.ok) {
     // Если статус 200, но не JSON - вероятно, это редирект через HTML
-    window.location.href = '/url';
+    window.location.href = '/protected/url';
     return;
 }
 
@@ -67,7 +67,7 @@
 }
 
     // Успешная авторизация
-    window.location.href = result.redirect || '/url"';
+    window.location.href = result.redirect || '/protected/url"';
 
 } catch (error) {
     console.error('Login error:', error);

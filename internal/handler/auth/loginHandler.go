@@ -59,7 +59,7 @@ func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 	// И ОБЯЗАТЕЛЬНО вернуть токен в теле ответа
 	ctx.JSON(200, gin.H{
 		"token":    token,
-		"redirect": "/url", // Куда перейти после входа
+		"redirect": "/protected/url", // Куда перейти после входа
 	})
 }
 

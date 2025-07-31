@@ -45,7 +45,7 @@ func (u *URL) CreateShortURLHandler(ctx *gin.Context) {
 	}
 	login, ok := loginValue.(string)
 	if !ok {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Некоректный логин"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Некорректный логин"})
 		return
 	}
 
@@ -63,7 +63,7 @@ func (u *URL) CreateShortURLHandler(ctx *gin.Context) {
 
 	//  validate url
 	if !IsValidURL(input.FullURL) {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Некоректная ссылка"})
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Некорректная ссылка"})
 		return
 	}
 

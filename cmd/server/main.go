@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"url_shortness/internal/Services"
+	"url_shortness/internal/handler/NotFound"
 	"url_shortness/internal/logger"
 	"url_shortness/internal/repository/database"
 )
@@ -42,6 +43,7 @@ func main() {
 
 	router.LoadHTMLFiles(files...) // load all files in server
 	router.Static("/static", "./static")
+	router.StaticFile("/favicon.ico", "./static/favicon.ico")
 	logger.Get().Info("templates and static loaded ")
 
 	router.GET("/", services.Handler().GreetingHandler)
@@ -52,14 +54,16 @@ func main() {
 	router.GET("/login", services.Auth().LoginHandlerGet)
 	router.POST("/login", services.Auth().LoginHandlerPost)
 
-	Protected := router.Group("/")
+	Protected := router.Group("/protected")
 	Protected.Use(services.Auth().AuthMiddleware())
 
 	Protected.GET("/url", services.URL().ShowURLHandler)
 	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
 	Protected.POST("/url", services.URL().CreateShortURLHandler)
-	Protected.GET("/:url", services.URL().FollowURLHandler)
+	Protected.GET("/l/:url", services.URL().FollowURLHandler)
 	Protected.DELETE("/url/:short_url", services.URL().DeleteURL)
+
+	router.NoRoute(NotFound.NotFoundHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
