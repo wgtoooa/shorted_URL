@@ -160,7 +160,7 @@ async function loadLinks() {
                     <button class="dropdown-toggle">⋯</button>
                     <div class="dropdown-menu">
                         <a href="#" class="dropdown-item edit-item" data-short-url="${escapeHTML(link.short_url)}">
-                            Изменить
+                            Изменить короткую ссылку
                         </a>
                         <a href="#" class="dropdown-item copy-item" data-full-url="${escapeHTML(link.full_url)}">
                             Копировать

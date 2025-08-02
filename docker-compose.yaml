@@ -1,15 +1,32 @@
 version: '3.8'
 
 services:
+#  app:
+#    build: .
+#    container_name: my-go-app
+#    restart: unless-stopped
+#    ports:
+#      - "8080:8080"
+#    env_file:
+#      - .env  # Все переменные, включая DB_PASSWORD, берутся отсюда
+#    depends_on:
+#      - postgres
+#    healthcheck:
+#      test: ["CMD-SHELL", "wget --spider http://localhost:8080/health || exit 1"]
+#      interval: 30s
+#      timeout: 3s
+
   postgres:
     image: postgres:15
-    container_name: my
+    container_name: postgres-my
+    env_file:
+      - .env  # Можно вынести POSTGRES_* переменные сюда
     environment:
-      POSTGRES_USER: wgtoooa     # Логин
-      POSTGRES_PASSWORD: 12345  # Пароль
-      POSTGRES_DB: URLDB         # Название БД
+      POSTGRES_USER: "${DB_USER}"  # Подстановка из .env
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_NAME}"
     ports:
-      - "5432:5432"             # Порт (host:container)
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

@@ -2,11 +2,10 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 	"go.uber.org/zap"
-	"log"
-	"os"
+
 	"path/filepath"
+	config "url_shortness/internal/Config"
 	"url_shortness/internal/Services"
 	"url_shortness/internal/handler/NotFound"
 	"url_shortness/internal/logger"
@@ -17,15 +16,14 @@ func main() {
 
 	router := gin.Default()
 
-	var DSN = database.DataBaseConfig{
-		User:     os.Getenv("DB_USER"),
-		Password: os.Getenv("DB_PASSWORD"),
-		Host:     os.Getenv("DB_HOST"),
-		Port:     os.Getenv("DB_PORT"),
-		DBName:   os.Getenv("DB_NAME"),
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		logger.Get().Fatal("Error loading config", zap.Error(err))
 	}
-	logger.Init(false) //--Сделать еще config
+	logger.Init(cfg.Production) //--Сделать еще config
 	defer logger.Get().Sync()
+
+	var DSN = cfg.DataBaseConfig
 
 	dbPool, err := database.InitDB(DSN)
 	if err != nil {
@@ -65,18 +63,8 @@ func main() {
 
 	router.NoRoute(NotFound.NotFoundHandler)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+	cfgServer := cfg.Server
 
-	router.Run("0.0.0.0:" + port)
-	logger.Get().Info("server starting....", zap.String("port", port))
-}
-
-func init() {
-	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
-		return
-	}
+	router.Run(cfgServer.Host + ":" + cfgServer.Port)
+	logger.Get().Info("server starting....", zap.String("port", cfgServer.Port))
 }
