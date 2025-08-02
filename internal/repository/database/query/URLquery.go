@@ -76,6 +76,19 @@ func DeleteURLByShortURLL(pool *pgxpool.Pool, shortURL string) (err error) {
 	return
 }
 
+func PutShortURL(pool *pgxpool.Pool, OldShortURL, NewShortURL string) error {
+	query := `update URL set short_url = $1 where short_url = $2`
+	cmdTag, err := pool.Exec(context.Background(), query, NewShortURL, OldShortURL)
+	if err != nil {
+		return err
+	}
+	if cmdTag.RowsAffected() == 0 {
+		return fmt.Errorf("Ссылка для изменения не найдена")
+	}
+
+	return nil
+}
+
 func IsExistsURL(pool *pgxpool.Pool, account_id int, full_url string) (bool, error) {
 	var id int
 	query := `SELECT id FROM url WHERE full_url = $1 AND account_id = $2`

@@ -55,9 +55,10 @@ func main() {
 	Protected := router.Group("/protected")
 	Protected.Use(services.Auth().AuthMiddleware())
 
-	Protected.GET("/url", services.URL().ShowURLHandler)
-	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
 	Protected.POST("/url", services.URL().CreateShortURLHandler)
+	Protected.GET("/url", services.URL().ShowURLHandler)
+	Protected.PATCH("/url", services.URL().PatchURLHandler)
+	Protected.GET("/url/data", services.URL().GetUserURLsJSON)
 	Protected.GET("/l/:url", services.URL().FollowURLHandler)
 	Protected.DELETE("/url/:short_url", services.URL().DeleteURL)
 
@@ -65,6 +66,9 @@ func main() {
 
 	cfgServer := cfg.Server
 
-	router.Run(cfgServer.Host + ":" + cfgServer.Port)
+	err = router.Run(cfgServer.Host + ":" + cfgServer.Port)
+	if err != nil {
+		logger.Get().Fatal("Error running server", zap.Error(err))
+	}
 	logger.Get().Info("server starting....", zap.String("port", cfgServer.Port))
 }

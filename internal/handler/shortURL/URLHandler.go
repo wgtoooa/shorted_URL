@@ -125,6 +125,55 @@ func (u *URL) FollowURLHandler(ctx *gin.Context) {
 	ctx.Redirect(http.StatusFound, url.Full_url)
 }
 
+func (u *URL) PatchURLHandler(ctx *gin.Context) {
+	var request struct {
+		OldShortURL string `json:"old_short_url" binding:"required"`
+		NewShortURL string `json:"new_short_url" binding:"required"`
+	}
+
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		u.logger.Error("Ошибка валидации запроса", zap.Error(err))
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error":   "Неверный формат запроса",
+			"details": err.Error(),
+		})
+		return
+	}
+	if request.OldShortURL == request.NewShortURL {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Новая ссылка должна отличаться от старой",
+		})
+		return
+	}
+
+	if err := query.PutShortURL(u.db, request.OldShortURL, request.NewShortURL); err != nil {
+		if ok, _ := query.IsDuplicateKeyError(err); ok {
+			ctx.JSON(http.StatusConflict, gin.H{
+				"error": "Такая короткая ссылка уже занята",
+			})
+			return
+		}
+
+		u.logger.Error("Ошибка при обновлении ссылки",
+			zap.String("old", request.OldShortURL),
+			zap.String("new", request.NewShortURL),
+			zap.Error(err))
+
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Внутренняя ошибка сервера при изменении ссылки",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Короткая ссылка успешно изменена",
+		"data": gin.H{
+			"old_url": request.OldShortURL,
+			"new_url": request.NewShortURL,
+		},
+	})
+}
+
 func (u *URL) DeleteURL(ctx *gin.Context) {
 	short := ctx.Param("short_url")
 

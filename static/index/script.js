@@ -253,18 +253,173 @@ function initDeleteButtons() {
         });
     });
 }
-
-// Инициализация кнопок редактирования
+// Основная функция инициализации
 function initEditButtons() {
-    document.querySelectorAll('.edit-item').forEach(item => {
-        item.addEventListener('click', function(e) {
-            e.preventDefault();
-            const shortUrl = this.dataset.shortUrl;
-            showToast(`Функция изменения ссылки "${shortUrl}" будет реализована позже`, 'info');
-        });
+    document.querySelectorAll('.edit-item').forEach(button => {
+        button.addEventListener('click', handleEditClick);
     });
 }
 
+// Обработчик клика
+function handleEditClick(e) {
+    e.preventDefault();
+    const { shortUrl } = this.dataset;
+
+    if (!shortUrl) {
+        showToast('Недостаточно данных для редактирования', 'error');
+        return;
+    }
+
+    const modal = createEditModal(shortUrl);
+    document.body.appendChild(modal);
+    setupModalEvents(modal, shortUrl);
+}
+
+// Создание модального окна
+function createEditModal(shortUrl) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Редактирование ссылки</h3>
+            <div class="form-group">
+                <label>Короткий URL:</label>
+                <input type="text" id="short-url" value="${escapeHTML(shortUrl)}">
+                <div id="error-message" class="error-message"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-button cancel">Отмена</button>
+                <button id="save-btn" class="modal-button confirm">Сохранить</button>
+            </div>
+        </div>
+    `;
+    return modal;
+}
+
+// Настройка обработчиков событий
+function setupModalEvents(modal, originalUrl) {
+    const closeModal = () => modal.remove();
+
+    // Обработчики закрытия
+    modal.addEventListener('click', e => {
+        if (e.target === modal || e.target.classList.contains('close') || e.target.classList.contains('cancel')) {
+            closeModal();
+        }
+    });
+
+    // Обработчик сохранения
+    modal.querySelector('#save-btn').addEventListener('click', async () => {
+        await handleSaveAction(modal, originalUrl);
+    });
+}
+
+// Обработчик сохранения
+async function handleSaveAction(modal, originalUrl) {
+    const newUrl = modal.querySelector('#short-url').value.trim();
+    const errorElement = modal.querySelector('#error-message');
+    const saveBtn = modal.querySelector('#save-btn');
+
+    // Сброс предыдущих ошибок
+    errorElement.textContent = '';
+
+    // Валидация
+    if (!newUrl) {
+        errorElement.textContent = 'Поле не может быть пустым';
+        return;
+    }
+
+    if (newUrl === originalUrl) {
+        showToast('Изменений не обнаружено', 'info');
+        modal.remove();
+        return;
+    }
+
+    try {
+        // Блокировка кнопки на время запроса
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Сохранение...';
+
+        const response = await fetch('/protected/url', {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                old_short_url: originalUrl,
+                new_short_url: newUrl
+            }),
+            credentials: 'include'
+        });
+
+        await processResponse(response, modal, errorElement);
+    } catch (error) {
+        handleNetworkError(error, errorElement);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Сохранить';
+    }
+}
+
+// Обработка ответа сервера
+async function processResponse(response, modal, errorElement) {
+    if (response.ok) {
+        const data = await parseJSON(response);
+        handleSuccess(modal, data?.message);
+    } else {
+        await handleServerError(response, errorElement);
+    }
+}
+
+// Успешное выполнение
+function handleSuccess(modal, message) {
+    modal.remove();
+    showToast(message || 'Ссылка успешно обновлена', 'success');
+    setTimeout(() => location.reload(), 1000);
+}
+
+// Ошибки сервера
+async function handleServerError(response, errorElement) {
+    try {
+        const errorData = await parseJSON(response);
+        errorElement.textContent = errorData?.message ||
+            `Ошибка ${response.status}: ${response.statusText}`;
+    } catch {
+        errorElement.textContent = `Ошибка ${response.status}: ${response.statusText}`;
+    }
+}
+
+// Сетевые ошибки
+function handleNetworkError(error, errorElement) {
+    console.error('Ошибка сети:', error);
+    errorElement.textContent = 'Ошибка соединения с сервером';
+    showToast('Не удалось подключиться к серверу', 'error');
+}
+
+// Парсинг JSON с защитой
+async function parseJSON(response) {
+    const text = await response.text();
+    try {
+        return text ? JSON.parse(text) : {};
+    } catch {
+        return { message: text };
+    }
+}
+
+// Ваша функция экранирования
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString()
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Инициализация после загрузки DOM
+document.addEventListener('DOMContentLoaded', initEditButtons);
 // Функция для показа уведомлений
 function showToast(message, type = 'success') {
     const toast = document.createElement('div');
@@ -303,11 +458,11 @@ document.getElementById('createForm')?.addEventListener('submit', async function
     }
 
     // Валидация короткой ссылки (если указана)
-    if (short_url && !/^[a-zA-Z0-9_-]+$/.test(short_url)) {
-        messageEl.textContent = 'Короткая ссылка может содержать только буквы, цифры, "_" и "-"';
-        messageEl.classList.add('error');
-        return;
-    }
+    // if (short_url && !/^[a-zA-Z0-9_-]+$/.test(short_url)) {
+    //     messageEl.textContent = 'Короткая ссылка может содержать только буквы, цифры, "_" и "-"';
+    //     messageEl.classList.add('error');
+    //     return;
+    // }
 
     const data = { full_url };
     if (short_url) data.short_url = short_url;
