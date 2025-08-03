@@ -25,19 +25,46 @@
 
 <!-- Сообщение о копировании -->
 <div class="copy-message" id="copyMessage">Ссылка скопирована!</div>
-
 <!-- Модальное окно подтверждения удаления -->
 <div id="deleteModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Подтвердите удаление</h3>
-        <p id="modalMessage">Вы уверены, что хотите удалить эту ссылку?</p>
-        <div class="modal-buttons">
-            <button class="modal-button cancel" id="cancelDelete">Отмена</button>
-            <button class="modal-button confirm" id="confirmDelete">Удалить</button>
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title" id="modalTitle">Подтвердите удаление</h3>
+            <button class="modal__close" id="closeDeleteModal">&times;</button> <!-- 🔁 исправлено -->
         </div>
-        <div id="deleteMessage" class="message"></div>
+        <div class="modal__body">
+            <p id="modalMessage">Вы уверены, что хотите удалить эту ссылку?</p>
+            <div id="deleteMessage" class="message"></div>
+        </div>
+        <div class="modal__footer">
+            <button class="modal__btn modal__btn--cancel" id="cancelDelete">Отмена</button>
+            <button class="modal__btn modal__btn--confirm" id="confirmDelete">Удалить</button>
+        </div>
     </div>
 </div>
+
+<!-- Модальное окно редактирования ссылки -->
+<div id="editModal" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title">Редактирование ссылки</h3>
+            <button class="modal__close" id="closeEditModal">&times;</button>
+        </div>
+        <div class="modal__body">
+            <div class="form-group">
+                <label for="short-url-input">Короткий URL:</label>
+                <input type="text" id="short-url-input" />
+                <div id="editErrorMessage" class="error-message"></div>
+            </div>
+        </div>
+        <div class="modal__footer">
+            <button class="modal__btn modal__btn--cancel" id="cancelEdit">Отмена</button>
+            <button class="modal__btn modal__btn--confirm" id="saveEditBtn">Сохранить</button>
+        </div>
+    </div>
+</div>
+
+
 
 <script src="../../static/index/script.js"></script>
 </body>

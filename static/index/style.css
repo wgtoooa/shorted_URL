@@ -224,8 +224,7 @@ button:hover {
     z-index: 1001;
     display: none;
 }
-
-/* Стили для модального окна */
+/* Modal Overlay */
 .modal {
     position: fixed;
     top: 0;
@@ -236,7 +235,7 @@ button:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: var(--modal-bg);
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -252,12 +251,14 @@ button:hover {
     position: relative;
     width: 90%;
     max-width: 500px;
-    background: #fff;
+    background: var(--modal-content-bg);
     border-radius: 8px;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     transform: translateY(-50px);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background 0.3s ease;
     padding: 24px;
+    color: var(--text-color);
+    animation: modalFadeIn 0.3s ease-out forwards;
 }
 
 .modal.active .modal__content {
@@ -271,14 +272,14 @@ button:hover {
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--input-border);
 }
 
 .modal__title {
     margin: 0;
     font-size: 1.25rem;
     font-weight: 600;
-    color: #333;
+    color: var(--text-color);
 }
 
 .modal__close {
@@ -286,12 +287,12 @@ button:hover {
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    color: #888;
+    color: var(--text-color);
     transition: color 0.2s;
 }
 
 .modal__close:hover {
-    color: #333;
+    color: var(--short-url-color);
 }
 
 /* Modal Body */
@@ -317,13 +318,17 @@ button:hover {
 }
 
 .modal__btn--cancel {
-    background-color: #6c757d;
-    color: white;
+    background-color: var(--input-border);
+    color: var(--text-color);
 }
 
 .modal__btn--confirm {
-    background-color: #dc3545;
-    color: white;
+    background-color: var(--button-bg);
+    color: #fff;
+}
+
+.modal__btn--confirm:hover {
+    background-color: var(--button-hover);
 }
 
 .modal__btn:hover {
@@ -333,6 +338,36 @@ button:hover {
 
 .modal__btn:active {
     transform: translateY(0);
+}
+
+/* Input fields */
+.modal__body input[type="text"],
+.modal__body input[type="url"],
+.modal__body textarea {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s, border 0.3s;
+    box-sizing: border-box;
+    margin-top: 4px;
+}
+
+/* Error and success messages */
+.error-message,
+.message.error {
+    color: var(--message-error);
+    font-size: 0.9rem;
+    margin-top: 4px;
+}
+
+.message.success {
+    color: var(--message-success);
+    font-size: 0.9rem;
+    margin-top: 4px;
 }
 
 /* Responsive */
@@ -361,8 +396,4 @@ button:hover {
         opacity: 1;
         transform: translateY(0);
     }
-}
-
-.modal__content {
-    animation: modalFadeIn 0.3s ease-out forwards;
 }
