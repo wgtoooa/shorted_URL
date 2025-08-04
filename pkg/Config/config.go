@@ -5,7 +5,8 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"go.uber.org/zap"
 	"time"
-	"url_shortness/internal/logger"
+	"url_shortness/internal/infra/redis"
+	"url_shortness/pkg/logger"
 )
 
 type DataBaseConfig struct {
@@ -28,6 +29,7 @@ type Config struct {
 		Port string `envconfig:"SERVER_PORT" default:"8080"`
 		Host string `envconfig:"SERVER_HOST" default:"localhost"`
 	}
+	ConfigRedis redis.ConfigRedis
 }
 
 func LoadConfig() (*Config, error) {

@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
-	config "url_shortness/internal/Config"
-	"url_shortness/internal/logger"
-	"url_shortness/internal/repository/database/query"
+	query2 "url_shortness/internal/infra/database/query"
+	"url_shortness/pkg/Config"
+	"url_shortness/pkg/logger"
 )
 
 func InitDB(config config.DataBaseConfig) (*pgxpool.Pool, error) {
@@ -33,12 +33,12 @@ func InitDB(config config.DataBaseConfig) (*pgxpool.Pool, error) {
 
 	logger.Get().Info("Successfully connected to PostgresQL")
 	// Создаем таблицы
-	if err = query.CreatedTableAccount(dbPool); err != nil {
+	if err = query2.CreatedTableAccount(dbPool); err != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("failed to create account table: %w", err)
 	}
 
-	if err = query.CreateTableURL(dbPool); err != nil {
+	if err = query2.CreateTableURL(dbPool); err != nil {
 		dbPool.Close()
 		return nil, fmt.Errorf("failed to create URL table: %w", err)
 	}

@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"database/sql"
-	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"go.uber.org/zap"
@@ -10,7 +8,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"url_shortness/internal/repository/database/query"
+	"url_shortness/internal/infra/product"
 )
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
@@ -30,18 +28,11 @@ func (a *Auth) LoginHandlerPost(ctx *gin.Context) {
 
 	login := ValidLogin(inputLoginDate.Login)
 
-	user, err := query.GetAccount(a.db, login) // get account it user
+	user, err := product.GetUser(a.db, a.rdb, login)
 	if err != nil {
-
-		if errors.Is(err, sql.ErrNoRows) {
-			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Пользователь не найден"})
-			return
-		}
-		a.logger.Error(err.Error())
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка сервера"})
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-
 	if !CheckPassword(user.Password, inputLoginDate.Password) {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Неправильный пароль"})
 		return

@@ -3,18 +3,19 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"url_shortness/internal/domain/Services"
+	"url_shortness/internal/infra/database"
+	"url_shortness/internal/infra/redis"
+	"url_shortness/internal/interfaces/http/handler/NotFound"
+	"url_shortness/pkg/Config"
+	"url_shortness/pkg/logger"
 
 	"path/filepath"
-	config "url_shortness/internal/Config"
-	"url_shortness/internal/Services"
-	"url_shortness/internal/handler/NotFound"
-	"url_shortness/internal/logger"
-	"url_shortness/internal/repository/database"
 )
 
 func main() {
 
-	router := gin.Default()
+	router := gin.Default() // сделать так чтобы можно было настраивать
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -31,7 +32,10 @@ func main() {
 	}
 	defer dbPool.Close()
 
-	services := Services.NewAppServices(dbPool)
+	rdb := redis.InitRedis(cfg.ConfigRedis)
+	defer rdb.Close()
+
+	services := Services.NewAppServices(dbPool, rdb)
 
 	files, err := filepath.Glob("templates/**/*") // load all files from templates
 	if err != nil {

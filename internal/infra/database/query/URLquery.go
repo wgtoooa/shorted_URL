@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"url_shortness/internal/repository/database/Table"
+	"url_shortness/internal/domain/entities/Table"
 )
 
 func CreateTableURL(pool *pgxpool.Pool) (err error) {

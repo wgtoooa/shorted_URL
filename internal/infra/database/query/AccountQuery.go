@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.uber.org/zap"
-	"url_shortness/internal/logger"
-	"url_shortness/internal/repository/database/Table"
+	"url_shortness/internal/domain/entities/Table"
+	"url_shortness/pkg/logger"
 )
 
 func CreatedTableAccount(pool *pgxpool.Pool) (err error) {

@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
-	"url_shortness/internal/repository/database/query"
+	"url_shortness/internal/infra/database/query"
 )
 
 func (a *Auth) RegisterHandlerGet(ctx *gin.Context) {

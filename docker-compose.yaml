@@ -1,20 +1,15 @@
-version: '3.8'
-
 services:
-#  app:
-#    build: .
-#    container_name: my-go-app
-#    restart: unless-stopped
-#    ports:
-#      - "8080:8080"
-#    env_file:
-#      - .env  # Все переменные, включая DB_PASSWORD, берутся отсюда
-#    depends_on:
-#      - postgres
-#    healthcheck:
-#      test: ["CMD-SHELL", "wget --spider http://localhost:8080/health || exit 1"]
-#      interval: 30s
-#      timeout: 3s
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"  # Пароль для Redis
+      REDIS_DB: "${REDIS_DB:-0}"          # База данных (по умолчанию 0)
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
 
   postgres:
     image: postgres:15
@@ -31,4 +26,5 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
+  redis_data:
   postgres_data:

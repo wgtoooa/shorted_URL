@@ -5,7 +5,7 @@ import "time"
 type Account struct {
 	Id        int
 	Login     string    `json:"login"`
-	Password  string    `json:"-"`
+	Password  string    `json:"Password"`
 	CountURL  int       `json:"count_url"`
 	CreatedAt time.Time `json:"createdAt"`
 }
