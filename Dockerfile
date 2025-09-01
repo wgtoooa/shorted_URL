@@ -1,11 +1,23 @@
-FROM golang:alpine AS builder
+FROM golang:1.24-alpine AS builder
 WORKDIR /app
+
 COPY go.mod go.sum ./
 RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o main ./cmd/server/main.go
 
-FROM alpine:3.19
+COPY . .
+
+
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-w -s" -o app ./cmd/server/main.go
+
+
+FROM alpine:3.20
 WORKDIR /app
-COPY --from=builder /app/main .
-CMD ["./main"]
+
+
+COPY --from=builder /app/app .
+
+COPY --from=builder /app/templates ./templates
+COPY --from=builder /app/static ./static
+
+EXPOSE 8080
+CMD ["./app"]

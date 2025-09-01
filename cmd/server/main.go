@@ -15,14 +15,15 @@ import (
 
 func main() {
 
-	router := gin.Default() // сделать так чтобы можно было настраивать
+	logger.Init(false) //--Сделать еще config
+	defer logger.Get().Sync()
+
+	router := gin.Default()
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logger.Get().Fatal("Error loading config", zap.Error(err))
 	}
-	logger.Init(cfg.Production) //--Сделать еще config
-	defer logger.Get().Sync()
 
 	var DSN = cfg.DataBaseConfig
 
@@ -42,6 +43,10 @@ func main() {
 		logger.Get().Error("failed Load template files", zap.Error(err))
 		return
 	}
+
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{"status": "healthy"})
+	})
 
 	router.LoadHTMLFiles(files...) // load all files in server
 	router.Static("/static", "./static")

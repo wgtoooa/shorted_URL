@@ -3,6 +3,7 @@ package redis
 import (
 	"context"
 	"github.com/redis/go-redis/v9"
+	"log"
 	"url_shortness/pkg/logger"
 )
 
@@ -23,6 +24,7 @@ func InitRedis(cfg ConfigRedis) *redis.Client {
 	})
 
 	if err := client.Ping(context.Background()).Err(); err != nil {
+		log.Println(cfg)
 		logger.Get().Panic(err.Error())
 	}
 	logger.Get().Info("Redis service initialized")
