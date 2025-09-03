@@ -1,31 +1,41 @@
 # URL Shortener
 
-Привет, дорогой друг, ты попал на мой первый проект на golang: укоротитель ссылок.
-Рвбочий стек: Golang, html/css/js, PostgreSQL, Redis.
+Welcome to my first Golang project - a URL shortening service!
 
-![Логотип](/static/URLSHORT.png)
+<img src="/static/URLSHORT.png" alt="Логотип" style="width: 400px; height: auto;">
 
-## 🚀 Возможности
+##  Tech Stack
 
-*   **Профиль:** В начале ты регистрируешься и имеешь свой личный аккаунт.
-*   **Сокращение ссылок:** Сокращаешь длинную ссылку и получаешь короткую, также ты можешь сам обозначить ее название
-*   **Дополнительно:** Можно удалять ссылки, редактировать короткие названия. В профиле хранятся 5 ссылок, при нажатии на которых ты сразу переместишься на закрепленную страницу.
+*   **Backend:** Golang
+*   **Frontend:** HTML, CSS, JavaScript
+*   **Database:** PostgreSQL
+*   **Cache:** Redis
 
-## 📦 Установка
+##  Features
+* **User Profiles:** Register and create your personal account
+* **URL Shortening:** Convert long URLs into short, manageable links
+* **Custom Short URLs:** Choose your own custom names for shortened links
+* **Link Management:** Delete unwanted links, edit short URLs and copy full URLs
+* **Quick Access:** Your profile stores up to 5 frequently used links for instant access
 
-Пошаговое руководство по установке.
 
-1.  Клонируйте репозиторий:
+
+## 📦 Installation
+
+## Prerequisites
+* Docker and Docker Compose
+* Git
+
+## Setup Instructions
+
+1.  Clone the repository:
     ```bash
     git clone https://github.com/wgtoooa/shorted_URL.git
+    cd shorted_URL
     ```
-2.  Перейдите в директорию проекта:
-    ```bash
-    cd ваш-репозиторий
-    ```
-3.  Заполнить зависимости:
+2.  Configure environment variables:
 
-#### Пример файла `.env`
+#### Create a .env file in the project root with the following variables:
 
 ```env
 # Database
@@ -51,19 +61,36 @@ JWT_SECRET=your-super-secret-jwt-key
 # Environment
 PRODUCTION=true 
 ```
-4. Запуск проекта(нужен Docker)
+3. Build and run with Docker:
 ```bash
-#собираем образ
+# Build the Docker images
 docker compose build
 
-#запускаем  проект в фоновом режиме
+# Start the services in detached mode
 docker compose up -d
 ```
-5. Тестирование
+4. Verify the installation:
 ```bash
-#проверим работу
-curl http://localhost:(you-port)/health
-#Ожидаем status OK
+curl http://localhost:80/health
+# Expected response: status OK
 ```
-## Поддержка
-Если возникнут вопросы писать в телеграм **@wgtoooa**
+
+## 🎯 Usage
+1. Register a new account
+2. Log in to your personal dashboard
+3. Shorten URLs using the provided form
+4. Manage your shortened links from your profile
+5. Use your custom short URLs to redirect to original websites
+
+## 🛠️ Development
+To contribute to this project:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## ❓ Support
+If you encounter any issues or have questions, please contact me on Telegram: **@wgtoooa**
+
+## 📄 License
+This project is open source and available under the MIT License.
