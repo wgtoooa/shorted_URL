@@ -1,6 +1,7 @@
 # URL Shortener
 
 Привет, дорогой друг, ты попал на мой первый проект на golang: укоротитель ссылок.
+Рвбочий стек: Golang, html/css/js, PostgreSQL, Redis.
 
 ![Логотип](/static/URLSHORT.png)
 
